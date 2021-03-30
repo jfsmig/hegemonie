@@ -9,6 +9,7 @@ option go_package = ".;proto";
 
 package hege.reg;
 
+
 service Admin {
   //
   rpc CreateRegion(RegionCreateReq) returns (None) {}
@@ -38,12 +39,12 @@ service City {
 
   // Paginated query of all the cities of the region.
   // Only a summary of the cities are returned.
-  rpc AllCities (PaginatedQuery) returns (stream PublicCity) {}
+  rpc AllCities (PaginatedU64Query) returns (stream PublicCity) {}
 
   // Returns a complete view of the City
   // TODO(jfs): the request might fail because of a too large object
   //            to be replied.
-  rpc Show (CityId) returns (CityView) {}
+  rpc ShowAll (CityId) returns (CityView) {}
 
   // Start the study of a knowledge whose type is specified by its unique ID.
   // If the conditions are not met, an error is returned.
@@ -78,15 +79,22 @@ service City {
   rpc ListArmies (CityId) returns (stream ArmyName) {}
 }
 
+service Templates {
+  rpc ListTemplates (PaginatedStrQuery) returns (stream CityTemplate) {}
+  rpc CreateTemplate (CityTemplateReq) returns (Created) {}
+  rpc UpdateTemplate (CityTemplateReq) returns (None) {}
+  rpc DeleteTemplate (TemplateId) returns (None) {}
+}
+
 service Definitions {
   // Return (a page of) a list of all the Units that are possible in the world
-  rpc ListUnits (PaginatedQuery) returns (stream UnitTypeView) {}
+  rpc ListUnits (PaginatedU64Query) returns (stream UnitTypeView) {}
 
   // Return (a page of) a list of all the Buildings that are possible in the world
-  rpc ListBuildings (PaginatedQuery) returns (stream BuildingTypeView) {}
+  rpc ListBuildings (PaginatedU64Query) returns (stream BuildingTypeView) {}
 
   // Return (a page of) a list of all the Knowledge that are possible in the world
-  rpc ListKnowledges (PaginatedQuery) returns (stream KnowledgeTypeView) {}
+  rpc ListKnowledges (PaginatedU64Query) returns (stream KnowledgeTypeView) {}
 }
 
 service Army {
@@ -119,7 +127,6 @@ service Army {
   rpc Disband (ArmyTarget) returns (None) {}
 }
 
-message None {}
 
 message RegionSummary {
   string name = 1;
@@ -236,6 +243,11 @@ message CityId {
   uint64 city = 3;
 }
 
+message TemplateId {
+  string region = 1;
+  string id = 2;
+}
+
 message ResourcesAbs {
   uint64 r0 = 1;
   uint64 r1 = 2;
@@ -275,10 +287,33 @@ message UnitTypeView {
   uint32 health = 4;
 }
 
-message BuildingTypeView {
+message BuildingTypeRef {
   uint64 id = 1;
   string name = 2;
   uint32 ticks = 3;
+}
+
+message BuildingTypePublic {
+  ResourcesAbs cost0 = 1;
+  ResourcesAbs cost = 2;
+  ResourcesMod stock = 3;
+  ResourcesMod prod = 4;
+  bool multiple = 5;
+}
+
+message BuildingTypePrivate {
+  int64 popBuild = 1;
+  int64 popFall = 2;
+  int64 popDestroy = 3;
+  int64 popDismantle = 4;
+  repeated uint64 requires = 5;
+  repeated uint64 conflicts = 6;
+}
+
+message BuildingTypeView {
+  BuildingTypeRef ref = 1;
+  BuildingTypePublic public = 2;
+  BuildingTypePrivate private = 3;
 }
 
 message KnowledgeTypeView {
@@ -298,7 +333,7 @@ message UnitView {
 }
 
 message BuildingView {
-  BuildingTypeView type = 1;
+  BuildingTypeRef type = 1;
   string id = 2;
   uint64 idType = 3;
   uint32 ticks = 4;
@@ -333,7 +368,7 @@ message ProductionView {
 
 message CityEvolution {
   repeated KnowledgeTypeView kFrontier = 1;
-  repeated BuildingTypeView bFrontier = 2;
+  repeated BuildingTypeRef bFrontier = 2;
   repeated UnitTypeView uFrontier = 3;
 }
 
@@ -385,25 +420,42 @@ message PublicCity {
   int64 score = 9;
 }
 
+message CityTemplate {
+  // The :id: field will be ignored
+  PublicCity public = 1;
+  ResourcesAbs stock = 2;
+  ResourcesAbs stockCapacity = 3;
+  ResourcesAbs production = 4;
+  repeated uint64 buildingTypes = 5;
+  repeated uint64 skillTypes = 6;
+  repeated uint64 unitTypes = 7;
+}
+
+message CityTemplateReq {
+  string region = 1;
+  // Optional
+  string id = 2;
+  CityTemplate tpl = 3;
+}
+
 message CityView {
   PublicCity public = 1;
-  string owner = 3;
-  string deputy = 4;
+  string owner = 2;
 
-  uint32 tickMassacres = 12;
-  bool auto = 13;
+  uint32 tickMassacres = 3;
+  bool auto = 4;
 
-  CityPolitics politics = 15;
+  CityPolitics politics = 5;
 
   // The resources owned by the City
-  StockView stock = 16;
-  ProductionView production = 17;
+  StockView stock = 6;
+  ProductionView production = 7;
 
   // All the things owned by the current city
-  CityAssets assets = 18;
+  CityAssets assets = 8;
 
   // All the things that the current may start to own
-  CityEvolution evol = 19;
+  CityEvolution evol = 9;
 }
 
 message StudyReq {
@@ -452,13 +504,24 @@ message CitiesByCharReq {
   uint64 marker = 3;
 }
 
-message PaginatedQuery {
-  string region = 1;
-  uint64 marker = 2;
-}
-
 message Artifact {
   string id = 1;
   string idType = 2;
   string name = 3;
+}
+
+message PaginatedU64Query {
+  string region = 1;
+  uint64 marker = 2;
+}
+
+message PaginatedStrQuery {
+  string region = 1;
+  string marker = 2;
+}
+
+message None {}
+
+message Created {
+  string id = 1;
 }

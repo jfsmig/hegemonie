@@ -59,7 +59,7 @@ func (es *eventService) Register(grpcSrv *grpc.Server) error {
 
 // Ack1 marks an event as read so that it won't be listed again.
 func (es *eventService) Ack1(ctx context.Context, req *proto.Ack1Req) (*proto.None, error) {
-	err := es.backend.Ack1(req.CharId, req.When, req.EvtId)
+	err := es.backend.Ack1(req.UserId, req.When, req.EvtId)
 	return &proto.None{}, err
 }
 
@@ -67,7 +67,7 @@ func (es *eventService) Ack1(ctx context.Context, req *proto.Ack1Req) (*proto.No
 // decreasing timestamp then by increasing UUID. The events are served as they are stored, the
 // messages are not rendered.
 func (es *eventService) List(ctx context.Context, req *proto.ListReq) (*proto.ListRep, error) {
-	items, err := es.backend.List(req.CharId, req.Marker, req.Max)
+	items, err := es.backend.List(req.UserId, req.Marker, req.Max)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +75,7 @@ func (es *eventService) List(ctx context.Context, req *proto.ListReq) (*proto.Li
 	rep := proto.ListRep{}
 	for _, x := range items {
 		rep.Items = append(rep.Items, &proto.ListItem{
-			CharId:  x.CharID,
+			UserId:  x.UserID,
 			When:    math.MaxUint64 - x.When,
 			EvtId:   x.ID,
 			Payload: x.Payload,
@@ -87,7 +87,7 @@ func (es *eventService) List(ctx context.Context, req *proto.ListReq) (*proto.Li
 // Push1 inserts an event in the log of the Character with the given ID.
 // The current timestamp will be used. An UUID will be generated.
 func (es *eventService) Push1(ctx context.Context, req *proto.Push1Req) (*proto.None, error) {
-	err := es.backend.Push1(req.CharId, req.EvtId, req.Payload)
+	err := es.backend.Push1(req.UserId, req.EvtId, req.Payload)
 	return &proto.None{}, err
 }
 

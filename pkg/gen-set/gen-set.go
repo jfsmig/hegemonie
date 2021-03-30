@@ -16,7 +16,6 @@ import (
 )
 
 var headerTemplate = `// Code generated : DO NOT EDIT.
-// Code generated : {{.Date}}
 
 // Copyright (c) 2018-2021 Contributors as noted in the AUTHORS file
 // This Source Code Form is subject to the terms of the Mozilla Public
@@ -143,7 +142,11 @@ func (s {{.SetName}}) Has(id {{.T0}}) bool {
 }
 
 func (s *{{.SetName}}) Remove(a {{.ItemType}}) {
-	idx := s.getIndex(a{{.F0}})
+	s.RemovePK(a{{.F0}})
+}
+
+func (s *{{.SetName}}) RemovePK(pk {{.T0}}) {
+	idx := s.getIndex(pk)
 	if idx >= 0 && idx < len(*s) {
 		if len(*s) == 1 {
 			*s = (*s)[:0]
@@ -222,7 +225,11 @@ func (s {{.SetName}}) Has(f0 {{.T0}}, f1 {{.T1}}) bool {
 }
 
 func (s *{{.SetName}}) Remove(a {{.ItemType}}) {
-	idx := s.getIndex(a{{.F0}}, a{{.F1}})
+	s.RemovePK(a{{.F0}}, a{{.F1}})
+}
+
+func (s *{{.SetName}}) RemovePK(f0 {{.T0}}, f1 {{.T1}}) {
+	idx := s.getIndex(f0, f1)
 	if idx >= 0 && idx < len(*s) {
 		if len(*s) == 1 {
 			*s = (*s)[:0]

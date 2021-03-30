@@ -142,7 +142,7 @@ func NewUnaryServerInterceptorZerolog() grpc.UnaryServerInterceptor {
 // DumpJSON encodes the argument in JSON and writes the output on os.Stdout
 func DumpJSON(x interface{}) error {
 	encoder := json.NewEncoder(os.Stdout)
-	encoder.SetIndent("", " ")
+	// encoder.SetIndent("", " ")
 	return encoder.Encode(x)
 }
 
@@ -170,5 +170,5 @@ func StatusJSON(code int, ID, msg string) error {
 		Code int
 		ID   string
 	}
-	return DumpJSON(status{Msg: "Create", Code: 200, ID: ID})
+	return DumpJSON(status{Msg: "Create", Code: code, ID: ID})
 }

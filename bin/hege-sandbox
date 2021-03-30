@@ -54,6 +54,10 @@ function config() {
 	# Generate a sample configuration for the Proxy
 	sed "s;@@BASE@@;$BASE;" < "$REPO/etc/haproxy/haproxy-all-in-one.cfg" > "$D/etc/haproxy/haproxy.cfg"
 
+	cat >>$D/enable <<EOF
+alias hc='hege client -f $D/etc/hegemonie/client.yml'
+EOF
+
 	echo "$D"
 }
 

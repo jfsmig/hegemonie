@@ -5,10 +5,15 @@
 
 package region
 
+import (
+	"github.com/google/uuid"
+	"github.com/juju/errors"
+)
+
 func (reg *Region) UnitGet(city uint64, id string) *Unit {
 	c := reg.CityGet(city)
 	if c != nil {
-		return c.Unit(id)
+		return c.GetUnit(id)
 	}
 	return nil
 }
@@ -32,4 +37,38 @@ func (s SetOfUnitTypes) Frontier(owned []*Building) []*UnitType {
 func (u *Unit) Finish() *Unit {
 	u.Ticks = 0
 	return u
+}
+
+// Create a Unit of the given UnitType.
+// No check is performed to verify the City has all the requirements.
+func (c *City) StartUnit(w *Region, pType *UnitType) *Unit {
+	id := uuid.New().String()
+	u := &Unit{ID: id, Type: pType.ID, Ticks: pType.Ticks, Health: pType.Health}
+	c.Units.Add(u)
+	return u
+}
+
+// Start the training of a Unit of the given UnitType (id).
+// The whole chain of requirements will be checked.
+func (c *City) Train(w *Region, typeID uint64) (string, error) {
+	t := w.world.UnitTypeGet(typeID)
+	if t == nil {
+		return "", errors.NotFoundf("unit type not found")
+	}
+	if !c.UnitAllowed(t) {
+		return "", errors.Forbiddenf("no suitable building")
+	}
+
+	u := c.StartUnit(w, t)
+	// TODO(jfs): emit a notification
+	return u.ID, nil
+}
+
+func (c *City) InstantTrain(w *Region, typeID uint64) error {
+	t := w.world.UnitTypeGet(typeID)
+	if t == nil {
+		return errors.NotFoundf("unit type not found")
+	}
+	c.StartUnit(w, t).Finish()
+	return nil
 }

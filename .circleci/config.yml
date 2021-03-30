@@ -2,8 +2,9 @@
 ---
 version: 2
 jobs:
-  build:
-    parallelism: 2
+
+  sanity:
+    parallelism: 1
     docker:
       - image: circleci/golang:1.16
     steps:
@@ -12,18 +13,44 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y --no-install-recommends make protobuf-compiler librocksdb-dev librocksdb5.17
       - run: |
-          go get -u -t github.com/golang/protobuf
-          go get -u -t google.golang.org/grpc
-          go get google.golang.org/protobuf/cmd/protoc-gen-go google.golang.org/grpc/cmd/protoc-gen-go-grpc
+          go get -u -t github.com/golang/protobuf@v1.4.3
+          go get -u -t google.golang.org/grpc@v1.35.0
+          go get google.golang.org/protobuf/cmd/protoc-gen-go@v1.25.0
+          go get google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.1.0
       - run: |
+          set -ex
+          make clean
+          go mod download
           make prepare
+          git diff --exit-code --quiet -- api/ docs/ etc/ pkg/ bin/
+
+  build:
+    parallelism: 1
+    docker:
+      - image: circleci/golang:1.16
+    steps:
+      - checkout
+      - run: |
+          sudo apt-get update -y
+          sudo apt-get install -y --no-install-recommends librocksdb-dev librocksdb5.17
+      - run: |
+          set -ex
           go get -v -t -d ./...
           go mod download
-          make
-      - run: make test
+          cd pkg/hege
+          go install
+      - run: |
+          ./bin/hege-ci-test coverage.txt
       - run:
           name: Code Coverage
           command: |
-            rm profile.out
             bash <(curl -s https://codecov.io/bash)
           when: on_success
+
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      - build
+      - sanity
+

@@ -16,10 +16,9 @@ type defsApp struct {
 	app *regionApp
 }
 
-func (app *defsApp) ListUnits(req *proto.PaginatedQuery, stream proto.Definitions_ListUnitsServer) error {
+func (app *defsApp) ListUnits(req *proto.PaginatedU64Query, stream proto.Definitions_ListUnitsServer) error {
 	return app.app._worldLock('r', func() error {
-		last := req.GetMarker()
-		for {
+		for last := req.GetMarker(); ; {
 			tab := app.app.w.Definitions.Units.Slice(last, 100)
 			if len(tab) <= 0 {
 				return nil
@@ -39,7 +38,7 @@ func (app *defsApp) ListUnits(req *proto.PaginatedQuery, stream proto.Definition
 	})
 }
 
-func (app *defsApp) ListBuildings(req *proto.PaginatedQuery, stream proto.Definitions_ListBuildingsServer) error {
+func (app *defsApp) ListBuildings(req *proto.PaginatedU64Query, stream proto.Definitions_ListBuildingsServer) error {
 	return app.app._worldLock('r', func() error {
 		for last := req.GetMarker(); ; {
 			tab := app.app.w.Definitions.Buildings.Slice(last, 100)
@@ -48,8 +47,25 @@ func (app *defsApp) ListBuildings(req *proto.PaginatedQuery, stream proto.Defini
 			}
 			for _, i := range tab {
 				last = i.ID
-				err := stream.Send(&proto.BuildingTypeView{
-					Id: i.ID, Name: i.Name, Ticks: i.Ticks})
+				v := &proto.BuildingTypeView{
+					Ref: &proto.BuildingTypeRef{Id: i.ID, Name: i.Name, Ticks: i.Ticks},
+					Public: &proto.BuildingTypePublic{
+						Cost0:    resAbsM2P(i.Cost0),
+						Cost:     resAbsM2P(i.Cost),
+						Stock:    resModM2P(i.Stock),
+						Prod:     resModM2P(i.Prod),
+						Multiple: i.MultipleAllowed,
+					},
+					Private: &proto.BuildingTypePrivate{
+						PopBuild:     i.PopBonusBuild,
+						PopFall:      i.PopBonusFall,
+						PopDismantle: i.PopBonusDismantle,
+						PopDestroy:   i.PopBonusDestroy,
+						Requires:     i.Requires,
+						Conflicts:    i.Conflicts,
+					},
+				}
+				err := stream.Send(v)
 				if err == io.EOF {
 					return nil
 				}
@@ -61,7 +77,7 @@ func (app *defsApp) ListBuildings(req *proto.PaginatedQuery, stream proto.Defini
 	})
 }
 
-func (app *defsApp) ListKnowledges(req *proto.PaginatedQuery, stream proto.Definitions_ListKnowledgesServer) error {
+func (app *defsApp) ListKnowledges(req *proto.PaginatedU64Query, stream proto.Definitions_ListKnowledgesServer) error {
 	return app.app._worldLock('r', func() error {
 		for last := req.GetMarker(); ; {
 			tab := app.app.w.Definitions.Knowledges.Slice(last, 100)

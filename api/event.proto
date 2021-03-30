@@ -29,7 +29,7 @@ service Producer {
 }
 
 message ListReq {
-  string charId = 1;
+  string userId = 1;
   // marker regarding the timestamp
   uint64 marker = 2;
   uint32 max = 3;
@@ -40,7 +40,7 @@ message ListRep {
 }
 
 message ListItem {
-  string charId = 1;
+  string userId = 1;
 
   // Exact naming of the Event
   uint64 when = 2;
@@ -50,7 +50,7 @@ message ListItem {
 }
 
 message Ack1Req {
-  string charId = 1;
+  string userId = 1;
 
   // Exact naming of the Event
   uint64 when = 2;
@@ -58,7 +58,7 @@ message Ack1Req {
 }
 
 message Push1Req {
-  string charId = 1;
+  string userId = 1;
 
   // JFS: The timestamp of the message is decided by the service.
   // Unique ID of the message.

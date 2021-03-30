@@ -7,6 +7,7 @@ package region
 
 import (
 	"context"
+	"github.com/google/uuid"
 	"github.com/juju/errors"
 )
 
@@ -34,27 +35,25 @@ func (reg *Region) CityGet(id uint64) *City {
 	return reg.Cities.Get(id)
 }
 
-func (reg *Region) CityCreateModel(loc uint64, model *City) (*City, error) {
+func (reg *Region) CityCreate(loc uint64) (*City, error) {
 	if reg.Cities.Has(loc) {
 		return nil, errors.AlreadyExistsf("city found at [%v]", loc)
 	}
-	city := CopyCity(model)
+	city := MakeCity()
 	city.ID = loc
-	city.Name = "NOT-SET"
+	city.Name = uuid.New().String()
 	reg.Cities.Add(city)
 	return city, nil
 }
 
-func (reg *Region) CityCreate(loc uint64) (*City, error) {
-	return reg.CityCreateModel(loc, nil)
-}
-
-func (reg *Region) CitiesList(idChar string) []*City {
+func (reg *Region) GetCitiesByOwner(idChar string) []*City {
 	rep := make([]*City, 0)
 	for _, c := range reg.Cities {
-		if c.Owner == idChar || c.Deputy == idChar {
+		if c.Owner == idChar {
 			rep = append(rep, c)
 		}
 	}
 	return rep
 }
+
+func (reg *Region) GetWorld() *World { return reg.world }

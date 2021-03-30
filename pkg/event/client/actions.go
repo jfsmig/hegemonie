@@ -29,13 +29,13 @@ func (cfg *ClientCLI) connect(ctx context.Context, action utils.ActionFunc) erro
 // DoPush insert an event whose content and target are described on the command line.
 // A descriptive error is returned in case of failure.
 // FIXME(jfsmig): no retry is performed upon error
-func (cfg *ClientCLI) DoPush(ctx context.Context, charID string, msg ...string) error {
+func (cfg *ClientCLI) DoPush(ctx context.Context, UserID string, msg ...string) error {
 	return cfg.connect(ctx, func(ctx context.Context, cnx *grpc.ClientConn) error {
 		var err error
 		client := proto.NewProducerClient(cnx)
 		for _, a := range msg {
 			id := uuid.New().String()
-			_, e := client.Push1(ctx, &proto.Push1Req{CharId: charID, EvtId: id, Payload: []byte(a)})
+			_, e := client.Push1(ctx, &proto.Push1Req{UserId: UserID, EvtId: id, Payload: []byte(a)})
 			if e != nil {
 				if err == nil {
 					err = errors.Trace(e)
@@ -45,9 +45,9 @@ func (cfg *ClientCLI) DoPush(ctx context.Context, charID string, msg ...string) 
 					err = errors.Annotate(err, oldE.Error())
 					err = errors.Annotate(err, e.Error())
 				}
-				utils.Logger.Error().Str("char", charID).Str("msg", a).Str("uuid", id).Err(err).Msg("PUSH")
+				utils.Logger.Error().Str("char", UserID).Str("msg", a).Str("uuid", id).Err(err).Msg("PUSH")
 			} else {
-				utils.Logger.Info().Str("char", charID).Str("msg", a).Str("uuid", id).Msg("PUSH")
+				utils.Logger.Info().Str("char", UserID).Str("msg", a).Str("uuid", id).Msg("PUSH")
 			}
 		}
 		return err
@@ -56,15 +56,15 @@ func (cfg *ClientCLI) DoPush(ctx context.Context, charID string, msg ...string) 
 
 // DoAck consumes a message whose owner, timestamp and ID are described on the command line.
 // FIXME(jfsmig): no retry is performed upon error
-func (cfg *ClientCLI) DoAck(ctx context.Context, charID, evtID string, when uint64) error {
+func (cfg *ClientCLI) DoAck(ctx context.Context, UserID, evtID string, when uint64) error {
 	return cfg.connect(ctx, func(ctx context.Context, cnx *grpc.ClientConn) error {
 		client := proto.NewConsumerClient(cnx)
-		_, err := client.Ack1(ctx, &proto.Ack1Req{CharId: charID, When: when, EvtId: evtID})
+		_, err := client.Ack1(ctx, &proto.Ack1Req{UserId: UserID, When: when, EvtId: evtID})
 		if err != nil {
 			return errors.Trace(err)
 		}
 		utils.Logger.Info().
-			Str("char", charID).
+			Str("char", UserID).
 			Uint64("when", when).
 			Str("uuid", evtID).
 			Msg("ACK")
@@ -75,16 +75,16 @@ func (cfg *ClientCLI) DoAck(ctx context.Context, charID, evtID string, when uint
 // DoList dumps to os.Stdout the Event objects streamed by the contacted service. The output consists
 // in a JSON stream of objects separated by a CRLF (i.e. one object per line)
 // FIXME(jfsmig): no retry is performed upon error
-func (cfg *ClientCLI) DoList(ctx context.Context, charID string, when uint64, marker string, max uint32) error {
+func (cfg *ClientCLI) DoList(ctx context.Context, UserID string, when uint64, marker string, max uint32) error {
 	return cfg.connect(ctx, func(ctx context.Context, cnx *grpc.ClientConn) error {
 		client := proto.NewConsumerClient(cnx)
-		rep, err := client.List(ctx, &proto.ListReq{CharId: charID, Marker: when, Max: 100})
+		rep, err := client.List(ctx, &proto.ListReq{UserId: UserID, Marker: when, Max: 100})
 		if err != nil {
 			return errors.Trace(err)
 		}
 		anyError := false
 		for _, x := range rep.Items {
-			fmt.Printf("%s %d %s %s\n", x.CharId, x.When, x.EvtId, x.Payload)
+			fmt.Printf("%s %d %s %s\n", x.UserId, x.When, x.EvtId, x.Payload)
 		}
 		if anyError {
 			return errors.New("Invalid events matched")

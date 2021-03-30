@@ -27,7 +27,7 @@ func (a *Army) ApplyAgressivity(w *Region) {
 func (a *Army) Move(ctx context.Context, r *Region) {
 	w := r.world
 
-	if a.Fight != "" {
+	if a.FightID != "" {
 		return
 	}
 
@@ -152,7 +152,7 @@ func (a *Army) JoinCityDefence(w *Region, pCity *City) bool {
 		panic("inconsistency")
 	}
 
-	a.Fight = pCity.Assault.ID
+	a.FightID = pCity.Assault.ID
 	pCity.Assault.Defense.Add(a)
 
 	return true
@@ -165,7 +165,7 @@ func (a *Army) JoinCityAttack(w *Region, pCity *City) {
 			Defense: make(SetOfArmies, 0),
 			Attack:  make(SetOfArmies, 0)}
 		if def, _ := pCity.CreateArmyDefence(w); def != nil {
-			def.Fight = pCity.Assault.ID
+			def.FightID = pCity.Assault.ID
 			pCity.Assault.Defense.Add(def)
 		}
 	}
@@ -177,7 +177,7 @@ func (a *Army) JoinCityAttack(w *Region, pCity *City) {
 		panic("inconsistency")
 	}
 
-	a.Fight = pCity.Assault.ID
+	a.FightID = pCity.Assault.ID
 	pCity.Assault.Attack.Add(a)
 }
 

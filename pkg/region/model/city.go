@@ -15,6 +15,7 @@ import (
 func MakeCity() *City {
 	return &City{
 		ID:         0,
+		State:      CityStateIdle,
 		Units:      make(SetOfUnits, 0),
 		Buildings:  make(SetOfBuildings, 0),
 		Knowledges: make(SetOfKnowledges, 0),
@@ -23,32 +24,79 @@ func MakeCity() *City {
 	}
 }
 
-func CopyCity(original *City) *City {
-	c := MakeCity()
-	if original != nil {
-		c.Stock.Set(original.Stock)
-		c.Production.Set(original.Production)
-		c.StockCapacity.Set(original.StockCapacity)
+func (c *City) Apply(model *City) {
+	c.Owner = ""
+	c.Overlord = 0
+	c.TaxRate.SetValue(0.0)
+	c.Assault = nil
+
+	c.Chaotic = model.Chaotic
+	c.Alignment = model.Alignment
+	c.EthnicGroup = model.EthnicGroup
+	c.PoliticalGroup = model.PoliticalGroup
+	c.Cult = model.Cult
+
+	c.PermanentPopularity = 0
+	c.PermanentHealth = model.PermanentHealth
+	c.PermanentIntelligence = model.PermanentIntelligence
+	c.TicksMassacres = 0
+
+	c.Stock.Set(model.Stock)
+	c.Production.Set(model.Production)
+	c.StockCapacity.Set(model.StockCapacity)
+
+	c.Buildings = make(SetOfBuildings, 0)
+	for _, x0 := range model.Buildings {
+		x := new(Building)
+		*x = *x0
+		x.ID = uuid.New().String()
+		x.Ticks = 0
+		c.Buildings.Add(x)
 	}
-	return c
+
+	c.Knowledges = make(SetOfKnowledges, 0)
+	for _, x0 := range model.Knowledges {
+		x := new(Knowledge)
+		*x = *x0
+		x.ID = uuid.New().String()
+		x.Ticks = 0
+		c.Knowledges.Add(x)
+	}
+
+	c.Units = make(SetOfUnits, 0)
+	for _, x0 := range model.Units {
+		x := new(Unit)
+		*x = *x0
+		x.ID = uuid.New().String()
+		x.Ticks = 0
+		c.Units.Add(x)
+	}
+
+	c.Armies = make(SetOfArmies, 0)
+	c.Artifacts = make(SetOfArtifacts, 0)
+
+	c.Counters.Reset()
 }
 
-// Return a Unit owned by the current City, given the Unit ID
-func (c *City) Unit(id string) *Unit {
+// GetUnit returns a Unit owned by the current City, given the Unit ID
+func (c *City) GetUnit(id string) *Unit {
 	return c.Units.Get(id)
 }
 
-// Return a Building owned by the current City, given the Building ID
-func (c *City) Building(id string) *Building {
+// GetBuilding returns a Building owned by the current City, given the Building
+// ID
+func (c *City) GetBuilding(id string) *Building {
 	return c.Buildings.Get(id)
 }
 
-// Return a Knowledge owned by the current City, given the Knowledge ID
-func (c *City) Knowledge(id string) *Knowledge {
+// GetKnowledge returns a Knowledge owned by the current City, given the
+// Knowledge ID
+func (c *City) GetKnowledge(id string) *Knowledge {
 	return c.Knowledges.Get(id)
 }
 
-// Return total Popularity of the current City (permanent + transient)
+// GetActualPopularity returns the total Popularity of the current City
+// (permanent + transient)
 func (c *City) GetActualPopularity(w *World) int64 {
 	var pop int64 = c.PermanentPopularity
 
@@ -82,6 +130,9 @@ func (c *City) GetActualPopularity(w *World) int64 {
 	return pop
 }
 
+// GetProduction computes the actual production of the local City,
+// and a summary of the main steps leading to the result. In other words,
+// a summary of all the City assets that have an impact.
 func (c *City) GetProduction(w *World) *CityProduction {
 	p := &CityProduction{
 		Buildings: ResourceModifierNoop(),
@@ -103,6 +154,9 @@ func (c *City) GetProduction(w *World) *CityProduction {
 	return p
 }
 
+// GetStock computes the actual stock of the local City, and a summary of the
+// main steps leading to the result. In other words, a summary of all the City
+// assets that have an impact.
 func (c *City) GetStock(w *World) *CityStock {
 	p := &CityStock{
 		Buildings: ResourceModifierNoop(),
@@ -123,6 +177,25 @@ func (c *City) GetStock(w *World) *CityStock {
 	p.Actual.Apply(p.Buildings, p.Knowledge)
 	p.Usage = c.Stock.Copy()
 	return p
+}
+
+// GetLieges returns a list of all the Lieges of the current City.
+func (c *City) GetLieges() []*City {
+	return c.lieges[:]
+}
+
+// GetStats computes the gauges and extract the counters to build a CityStats
+// about the current City.
+func (c *City) GetStats(w *Region) CityStats {
+	stock := c.GetStock(w.world)
+	return CityStats{
+		Activity:       c.Counters,
+		StockCapacity:  stock.Actual,
+		StockUsage:     stock.Usage,
+		ScoreBuildings: uint64(c.Buildings.Len()),
+		ScoreKnowledge: uint64(c.Knowledges.Len()),
+		ScoreMilitary:  uint64(c.Armies.Len()),
+	}
 }
 
 func (c *City) CreateEmptyArmy(w *Region) *Army {
@@ -421,49 +494,6 @@ func (c *City) UnitAllowed(t *UnitType) bool {
 	return false
 }
 
-// Create a Unit of the given UnitType.
-// No check is performed to verify the City has all the requirements.
-func (c *City) UnitCreate(w *Region, pType *UnitType) *Unit {
-	id := uuid.New().String()
-	u := &Unit{ID: id, Type: pType.ID, Ticks: pType.Ticks, Health: pType.Health}
-	c.Units.Add(u)
-	return u
-}
-
-// Start the training of a Unit of the given UnitType (id).
-// The whole chain of requirements will be checked.
-func (c *City) Train(w *Region, typeID uint64) (string, error) {
-	t := w.world.UnitTypeGet(typeID)
-	if t == nil {
-		return "", errors.NotFoundf("unit type not found")
-	}
-	if !c.UnitAllowed(t) {
-		return "", errors.Forbiddenf("no suitable building")
-	}
-
-	u := c.UnitCreate(w, t)
-	return u.ID, nil
-}
-
-func (c *City) Study(w *Region, typeID uint64) (string, error) {
-	t := w.world.KnowledgeTypeGet(typeID)
-	if t == nil {
-		return "", errors.NotFoundf("knowledge type not found")
-	}
-	for _, k := range c.Knowledges {
-		if typeID == k.Type {
-			return "", errors.AlreadyExistsf("already started")
-		}
-	}
-	if !CheckKnowledgeDependencies(c.ownedKnowledgeTypes(w), t.Requires, t.Conflicts) {
-		return "", errors.Forbiddenf("dependencies unmet")
-	}
-
-	id := uuid.New().String()
-	c.Knowledges.Add(&Knowledge{ID: id, Type: typeID, Ticks: t.Ticks})
-	return id, nil
-}
-
 func (c *City) ownedKnowledgeTypes(reg *Region) SetOfKnowledgeTypes {
 	out := make(SetOfKnowledgeTypes, 0)
 	for _, k := range c.Knowledges {
@@ -472,57 +502,17 @@ func (c *City) ownedKnowledgeTypes(reg *Region) SetOfKnowledgeTypes {
 	return out
 }
 
-// StartBuilding instantiates a new Building with the given BuildingType definition,
-// and the construction ticks to the maximum.
-// CAUTION: there is no resources spent in this method, there is no check performed
-// on the constraints.
-func (c *City) StartBuilding(t *BuildingType) *Building {
-	id := uuid.New().String()
-	b := &Building{ID: id, Type: t.ID, Ticks: t.Ticks}
-	c.Buildings.Add(b)
-	return b
-}
-
-// Build forwards the call to StartBuilding if all the conditions are met, after the initial fee
-// given in the BuildingType
-func (c *City) Build(w *Region, bID uint64) (string, error) {
-	t := w.world.BuildingTypeGet(bID)
-	if t == nil {
-		return "", errors.NotFoundf("Building Type not found")
-	}
-	if !t.MultipleAllowed {
-		for _, b := range c.Buildings {
-			if b.Type == bID {
-				return "", errors.AlreadyExistsf("building already present")
-			}
-		}
-	}
-	if !CheckKnowledgeDependencies(c.ownedKnowledgeTypes(w), t.Requires, t.Conflicts) {
-		return "", errors.Forbiddenf("dependencies unmet")
-	}
-	if !c.Stock.GreaterOrEqualTo(t.Cost0) {
-		return "", errors.Forbiddenf("insufficient resources")
-	}
-
-	c.Stock.Remove(t.Cost0)
-	return c.StartBuilding(t).ID, nil
-}
-
-// Lieges returns a list of all the Lieges of the current City.
-func (c *City) GetLieges() []*City {
-	return c.lieges[:]
-}
-
-// GetStats computes the gauges and extract the counters to build a CityStats
-// about the current City.
-func (c *City) GetStats(w *Region) CityStats {
-	stock := c.GetStock(w.world)
-	return CityStats{
-		Activity:       c.Counters,
-		StockCapacity:  stock.Actual,
-		StockUsage:     stock.Usage,
-		ScoreBuildings: uint64(c.Buildings.Len()),
-		ScoreKnowledge: uint64(c.Knowledges.Len()),
-		ScoreMilitary:  uint64(c.Armies.Len()),
-	}
+func (cnt *CityActivityCounters) Reset() {
+	cnt.ResourceProduced.Zero()
+	cnt.ResourceSent.Zero()
+	cnt.ResourceReceived.Zero()
+	cnt.TaxSent.Zero()
+	cnt.TaxReceived.Zero()
+	cnt.Moves = 0
+	cnt.FightsJoined = 0
+	cnt.FightsLeft = 0
+	cnt.FightsWon = 0
+	cnt.FightsLeft = 0
+	cnt.UnitsRaised = 0
+	cnt.UnitsLost = 0
 }

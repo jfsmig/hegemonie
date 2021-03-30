@@ -43,6 +43,17 @@ const (
 	CmdCityDefend = "defend"
 )
 
+const (
+	CityStateIdle = iota
+	CityStateAssigned
+	CityStateConfigured
+	CityStateMgmtConfigured
+	CityStateReady
+	CityStateActive
+	CityStateAuto
+	CityStateSuspended
+)
+
 type World struct {
 	// Core configuration common to all the Regions of the current World.
 	Config Configuration
@@ -116,6 +127,8 @@ type Region struct {
 	// Fights currently happening. The armies involved in the Fight are owned
 	// By the Fight and do not appear in the "Armies" field.
 	Fights SetOfFights
+
+	Models SetOfTemplates
 
 	// Back-pointer to the World the current Region belongs to.
 	world *World
@@ -304,12 +317,11 @@ type City struct {
 	// It is identical to the ID of the location (Vertex) on the Map.
 	ID uint64 `json:"Id"`
 
-	// The unique ID of the main Character in charge of the City.
-	// The Manager may name a Deputy manager in the City.
-	Owner string
+	// The current FSM state, whose value is valid if chosen among the macros in CityState*
+	State uint32 `json:"state"`
 
-	// The unique ID of a second Character in charge of the City.
-	Deputy string `json:",omitempty"`
+	// The unique ID of the User in charge of the City.
+	Owner string
 
 	// The unique ID of a City who is the boss of the current City.
 	// Used for resources production computations.
@@ -322,6 +334,21 @@ type City struct {
 
 	// The display name of the current City
 	Name string
+
+	// From Lawful (<0) to Chaotic (>0) (0 for neutral)
+	Chaotic int32
+
+	// From Bad (<0) to Good (>0) (0 for neutral)
+	Alignment int32
+
+	// Race, Tribe, whatever (0 for unset)
+	EthnicGroup uint32
+
+	// Major political orientation (0 for none)
+	PoliticalGroup uint32
+
+	// God, Pantheon, Philosophy (0 for unset)
+	Cult uint32
 
 	// Permanent Popularity of the current City
 	// The total value is the permanent value plus several "transient" bonus
@@ -339,20 +366,9 @@ type City struct {
 	// The total value is the permanent value plus several "transient" bonus
 	PermanentIntelligence int64
 
-	// From Lawful (<0) to Chaotic (>0) (0 for neutral)
-	Chaotic int32
-
-	// From Bad (<0) to Good (>0) (0 for neutral)
-	Alignment int32
-
-	// Race, Tribe, whatever (0 for unset)
-	EthnicGroup uint32
-
-	// Major political orientation (0 for none)
-	PoliticalGroup uint32
-
-	// God, Pantheon, Philosophy (0 for unset)
-	Cult uint32
+	// Number of massacres the current City undergo.
+	// It takes one production turn to recover one Massacre.
+	TicksMassacres uint32 `json:",omitempty"`
 
 	// Resources stock owned by the current City
 	Stock Resources
@@ -364,16 +380,6 @@ type City struct {
 	// Resources produced each round by the City, before the enforcing of
 	// Production Boosts ans Production Multipliers
 	Production Resources
-
-	// Number of massacres the current City undergo.
-	// It takes one production turn to recover one Massacre.
-	TicksMassacres uint32 `json:",omitempty"`
-
-	// Tells if the City is in automatic mode.
-	// The "auto" mode is intented for inactive or absent players.
-	// The armies come home to defend the City, no new building or unit is spawned.
-	// In the plans: a conservative behavior should be automated
-	Auto bool `json:",omitempty"`
 
 	Knowledges SetOfKnowledges
 
@@ -517,11 +523,11 @@ type Army struct {
 	// A display name for the current City
 	Name string
 
-	// The ID of the City that controls the current Army
+	// The City that controls the current Army
 	City *City `json:"-"`
 
 	// The ID of the Fight this Army is involved in.
-	Fight string `json:",omitempty"`
+	FightID string `json:"fight,omitempty"`
 
 	// The ID of the Cell the Army is on
 	Cell uint64 `json:",omitempty"`
@@ -570,6 +576,7 @@ type SetOfFights []*Fight
 //go:generate go run github.com/jfsmig/hegemonie/pkg/gen-set ./world_auto.go region:SetOfBuildings:*Building ID:string
 //go:generate go run github.com/jfsmig/hegemonie/pkg/gen-set ./world_auto.go region:SetOfBuildingTypes:*BuildingType
 //go:generate go run github.com/jfsmig/hegemonie/pkg/gen-set ./world_auto.go region:SetOfCities:*City
+//go:generate go run github.com/jfsmig/hegemonie/pkg/gen-set ./world_auto.go region:SetOfTemplates:*City Name:string
 //go:generate go run github.com/jfsmig/hegemonie/pkg/gen-set ./world_auto.go region:SetOfId:uint64 :uint64
 //go:generate go run github.com/jfsmig/hegemonie/pkg/gen-set ./world_auto.go region:SetOfKnowledges:*Knowledge ID:string
 //go:generate go run github.com/jfsmig/hegemonie/pkg/gen-set ./world_auto.go region:SetOfKnowledgeTypes:*KnowledgeType

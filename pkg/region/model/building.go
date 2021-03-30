@@ -5,6 +5,11 @@
 
 package region
 
+import (
+	"github.com/google/uuid"
+	"github.com/juju/errors"
+)
+
 func (s SetOfBuildingTypes) Frontier(pop int64, built []*Building, owned []*Knowledge) []*BuildingType {
 	bmap := make(map[uint64]bool)
 	pending := make(map[uint64]bool)
@@ -47,4 +52,64 @@ func (s SetOfBuildingTypes) Frontier(pop int64, built []*Building, owned []*Know
 		}
 	}
 	return result
+}
+
+// Abruptly terminate the construction of the Building.
+// The number of building ticks suddenly drop to 0, whatever its prior value.
+func (b *Building) Finish() *Building {
+	b.Ticks = 0
+	return b
+}
+
+// StartBuilding declares a new Building with the given type and the ticks gauge at its max
+// No check is performed to verify the City has all the requirements.
+func (c *City) StartBuilding(t *BuildingType) *Building {
+	id := uuid.New().String()
+	b := &Building{ID: id, Type: t.ID, Ticks: t.Ticks}
+	c.Buildings.Add(b)
+	return b
+}
+
+// Build forwards the call to StartBuilding if all the conditions are met, after the initial fee
+// given in the BuildingType
+func (c *City) Build(w *Region, bID uint64) (string, error) {
+	t := w.world.BuildingTypeGet(bID)
+	if t == nil {
+		return "", errors.NotFoundf("Building Type not found")
+	}
+	if !t.MultipleAllowed {
+		for _, b := range c.Buildings {
+			if b.Type == bID {
+				return "", errors.AlreadyExistsf("building already present")
+			}
+		}
+	}
+	if !CheckKnowledgeDependencies(c.ownedKnowledgeTypes(w), t.Requires, t.Conflicts) {
+		return "", errors.Forbiddenf("dependencies unmet")
+	}
+	if !c.Stock.GreaterOrEqualTo(t.Cost0) {
+		return "", errors.Forbiddenf("insufficient resources")
+	}
+
+	c.Stock.Remove(t.Cost0)
+	return c.StartBuilding(t).ID, nil
+}
+
+// Build forwards the call to StartBuilding if all the conditions are met, after the initial fee
+// given in the BuildingType
+func (c *City) InstantBuild(w *Region, bID uint64) error {
+	t := w.world.BuildingTypeGet(bID)
+	if t == nil {
+		return errors.NotFoundf("Building Type not found")
+	}
+	if !t.MultipleAllowed {
+		for _, b := range c.Buildings {
+			if b.Type == bID {
+				return nil
+			}
+		}
+	}
+
+	c.StartBuilding(t).Ticks = 0
+	return nil
 }

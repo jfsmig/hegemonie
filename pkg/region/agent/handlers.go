@@ -84,6 +84,7 @@ func (app *regionApp) Register(grpcSrv *grpc.Server) error {
 	proto.RegisterDefinitionsServer(grpcSrv, &defsApp{app: app})
 	proto.RegisterAdminServer(grpcSrv, &adminApp{app: app})
 	proto.RegisterArmyServer(grpcSrv, &armyApp{app: app})
+	proto.RegisterTemplatesServer(grpcSrv, &templatesApp{app: app})
 	grpc_prometheus.Register(grpcSrv)
 
 	utils.Logger.Info().
@@ -94,7 +95,7 @@ func (app *regionApp) Register(grpcSrv *grpc.Server) error {
 	return nil
 }
 
-// Make the RegionApp monnitorable by the server stub
+// Make the RegionApp monitorable by the server stub
 func (app *regionApp) Check(ctx context.Context) grpc_health_v1.HealthCheckResponse_ServingStatus {
 	return grpc_health_v1.HealthCheckResponse_SERVING
 }
@@ -146,7 +147,7 @@ func (app *regionApp) cityLock(mode rune, req *proto.CityId, action func(*region
 		if c == nil {
 			return status.Error(codes.NotFound, "no such city")
 		}
-		if c.Deputy != req.Character && c.Owner != req.Character {
+		if c.Owner != req.Character {
 			return status.Error(codes.PermissionDenied, "permission denied")
 		}
 

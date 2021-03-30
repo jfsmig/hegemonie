@@ -1,0 +1,236 @@
+digraph g {
+	pad=0.5;
+	layout=circo;
+	rankdir=LR;
+	graph[scale=2];
+	node[fontsize=10];
+	edge[fontsize=10];
+
+  subgraph cluster_private {
+    node            [shape=doublecircle];
+    priv_idle       [label="idle"];
+    node            [shape=box];
+    priv_assigned   [label="assigned"];
+    priv_configured [label="configured"];
+    priv_ready      [label="ready"];
+    priv_headless   [label="headless"];
+    priv_suspended  [label="suspended"];
+		node            [style=filled;fillcolor=lightgrey];
+    priv_auto       [label="auto"];
+    priv_active     [label="active"];
+
+		edge[color=gray28;fontcolor=gray29];
+    priv_idle -> priv_configured [label="gm.config()"];
+    priv_idle -> priv_assigned   [label="gm.assign()"];
+  //priv_idle -> error           [label="gm.resume()"];
+		edge[color=red4;fontcolor=red3];
+  //priv_idle -> error           [label="gm.dismiss()"];
+  //priv_idle -> error           [label="gm.suspend()"];
+    priv_idle -> priv_idle       [label="gm.reset()"];  // no-op
+		edge[color=blue;fontcolor=blue];
+  //priv_idle -> error           [label="user.config()"];
+  //priv_idle -> error           [label="user.acquire()"];
+  //priv_idle -> error           [label="user.leave()"];
+  //priv_idle -> error           [label="user.auto()"];
+
+		edge[color=gray28;fontcolor=gray29];
+    priv_assigned -> priv_ready    [label="gm.config()"];
+  //priv_assigned -> error         [label="gm.assign()"];
+  //priv_assigned -> error         [label="gm.resume()"];
+		edge[color=red4;fontcolor=red3];
+    priv_assigned -> priv_idle     [label="gm.dismiss()"];
+  //priv_assigned -> error         [label="gm.suspend()"];
+  //priv_assigned -> error         [label="gm.reset()"];
+		edge[color=blue;fontcolor=blue];
+  //priv_assigned -> error         [label="user.config()"];
+  //priv_assigned -> error         [label="user.acquire()"];
+  //priv_assigned -> error         [label="user.leave()"];
+  //priv_assigned -> error         [label="user.auto()"];
+
+		edge[color=gray28;fontcolor=gray29];
+    priv_configured -> priv_configured [label="gm.config()"];
+    priv_configured -> priv_ready      [label="gm.assign()"];
+  //priv_configured -> error           [label="gm.resume()"];
+		edge[color=red4;fontcolor=red3];
+  //priv_configured -> error           [label="gm.dismiss()"];
+  //priv_configured -> error           [label="gm.suspend()"];
+    priv_configured -> priv_idle       [label="gm.reset()"];
+		edge[color=blue;fontcolor=blue];
+  //priv_configured -> error           [label="user.config()"];
+  //priv_configured -> error           [label="user.acquire()"];
+  //priv_configured -> error           [label="user.leave()"];
+  //priv_configured -> error           [label="user.auto()"];
+
+		edge[color=gray28;fontcolor=gray29];
+  //priv_ready -> error           [label="gm.config()"];
+  //priv_ready -> error           [label="gm.assign()"];
+    priv_ready -> priv_active     [label="gm.resume()"];
+		edge[color=red4;fontcolor=red3];
+    priv_ready -> priv_configured [label="gm.dismiss()"];
+  //priv_ready -> error           [label="gm.suspend()"];
+  //priv_ready -> error           [label="gm.reset()"];
+		edge[color=blue;fontcolor=blue];
+  //priv_ready -> error           [label="user.config()"];
+  //priv_ready -> error           [label="user.acquire()"];
+  //priv_ready -> error           [label="user.leave()"];
+  //priv_ready -> error           [label="user.auto()"];
+
+		edge[color=gray28;fontcolor=gray29];
+  //priv_active -> error           [label="gm.config()"];
+  //priv_active -> error           [label="gm.assign()"];
+    priv_active -> priv_active     [label="gm.resume()"];  // no-op
+		edge[color=red4;fontcolor=red3];
+    priv_active -> priv_configured [label="gm.dismiss()"];
+    priv_active -> priv_suspended  [label="gm.suspend()"];
+  //priv_active -> error           [label="gm.reset()"];
+		edge[color=blue;fontcolor=blue];
+  //priv_active -> error           [label="user.config()"];
+  //priv_active -> error           [label="user.acquire()"];
+    priv_active -> priv_headless   [label="user.leave()"];
+    priv_active -> priv_auto       [label="user.auto()"];
+
+		edge[color=gray28;fontcolor=gray29];
+  //priv_auto -> error           [label="gm.config()"];
+  //priv_auto -> error           [label="gm.assign()"];
+  //priv_auto -> error           [label="gm.resume()"];
+		edge[color=red4;fontcolor=red3];
+    priv_auto -> priv_headless   [label="gm.dismiss()"];
+    priv_auto -> priv_suspended  [label="gm.suspend()"];
+  //priv_auto -> error           [label="gm.reset()"];
+		edge[color=blue;fontcolor=blue];
+  //priv_auto -> error           [label="user.config()"];
+  //priv_auto -> error           [label="user.acquire()"];
+    priv_auto -> priv_headless   [label="user.leave()"];
+    priv_auto -> priv_active     [label="user.auto()"];
+
+		edge[color=gray28;fontcolor=gray29];
+  //priv_headless -> error           [label="gm.config()"];
+    priv_headless -> priv_auto       [label="gm.assign()"];
+  //priv_headless -> error           [label="gm.resume()"];
+		edge[color=red4;fontcolor=red3];
+    priv_headless -> priv_headless   [label="gm.dismiss()"];  // no-op
+  //priv_headless -> error           [label="gm.suspend()"];
+  //priv_headless -> error           [label="gm.reset()"];
+		edge[color=blue;fontcolor=blue];
+  //priv_headless -> error           [label="user.config()"];
+  //priv_headless -> error           [label="user.acquire()"];
+  //priv_headless -> error           [label="user.leave()"];
+  //priv_headless -> error           [label="user.auto()"];
+
+		edge[color=gray28;fontcolor=gray29];
+  //priv_suspended -> error           [label="gm.config()"];
+  //priv_suspended -> error           [label="gm.assign()"];
+    priv_suspended -> priv_auto       [label="gm.resume()"];
+		edge[color=red4;fontcolor=red3];
+    priv_suspended -> priv_headless   [label="gm.dismiss()"];
+    priv_suspended -> priv_suspended  [label="gm.suspend()"];  // no-op
+    priv_suspended -> priv_idle       [label="gm.reset()"];
+		edge[color=blue;fontcolor=blue];
+  //priv_suspended -> error           [label="user.config()"];
+  //priv_suspended -> error           [label="user.acquire()"];
+    priv_suspended -> priv_headless   [label="user.leave()"];
+  //priv_suspended -> error           [label="user.auto()"];
+
+		label="PRIVATE";
+		graph[style=dotted,labelloc=b]
+  }
+
+  subgraph cluster_public {
+    node           [shape=doublecircle];
+    pub_idle       [label="idle"];
+    node           [shape=box];
+    pub_assigned   [label="assigned"];
+    pub_headless   [label="headless"];
+    pub_suspended  [label="suspended"];
+		node           [style=filled;fillcolor=lightgrey];
+    pub_auto       [label="auto"];
+    pub_active     [label="active"];
+
+		edge[color=gray28;fontcolor=gray29];
+  //pub_idle -> error           [label="gm.config()"];
+    pub_idle -> pub_assigned    [label="gm.assign()"];
+  //pub_idle -> error           [label="gm.resume()"];
+		edge[color=red4;fontcolor=red3];
+  //pub_idle -> error           [label="gm.dismiss()"];
+  //pub_idle -> error           [label="gm.suspend()"];
+    pub_idle -> pub_idle        [label="gm.reset()"];  // no-op
+		edge[color=blue;fontcolor=blue];
+  //pub_idle -> error           [label="user.config()"];
+    pub_idle -> pub_assigned    [label="user.acquire()"];
+  //pub_idle -> error           [label="user.leave()"];
+  //pub_idle -> error           [label="user.auto()"];
+
+		edge[color=gray28;fontcolor=gray29];
+    pub_assigned -> pub_active      [label="gm.config()"];
+  //pub_assigned -> error           [label="gm.assign()"];
+  //pub_assigned -> error           [label="gm.resume()"];
+		edge[color=red4;fontcolor=red3];
+    pub_assigned -> pub_idle        [label="gm.dismiss()"];
+  //pub_assigned -> error           [label="gm.suspend()"];
+  //pub_assigned -> error           [label="gm.reset()"];
+		edge[color=blue;fontcolor=blue];
+    pub_assigned -> pub_active      [label="user.config()"];
+  //pub_assigned -> error           [label="user.acquire()"];
+    pub_assigned -> pub_idle        [label="user.leave()"];
+  //pub_assigned -> error           [label="user.auto()"];
+
+		edge[color=gray28;fontcolor=gray29];
+  //pub_active -> error           [label="gm.config()"];
+  //pub_active -> error           [label="gm.assign()"];
+  //pub_active -> error           [label="gm.resume()"];
+		edge[color=red4;fontcolor=red3];
+    pub_active -> pub_headless    [label="gm.dismiss()"];
+    pub_active -> pub_suspended   [label="gm.suspend()"];
+  //pub_active -> error           [label="gm.reset()"];
+		edge[color=blue;fontcolor=blue];
+  //pub_active -> error           [label="user.config()"];
+  //pub_active -> error           [label="user.acquire()"];
+    pub_active -> pub_headless    [label="user.leave()"];
+    pub_active -> pub_auto        [label="user.auto()"];
+
+		edge[color=gray28;fontcolor=gray29];
+  //pub_auto -> error           [label="gm.config()"];
+  //pub_auto -> error           [label="gm.assign()"];
+  //pub_auto -> error           [label="gm.resume()"];
+		edge[color=red4;fontcolor=red3];
+    pub_auto -> pub_headless    [label="gm.dismiss()"];
+    pub_auto -> pub_suspended   [label="gm.suspend()"];
+  //pub_auto -> error           [label="gm.reset()"];
+		edge[color=blue;fontcolor=blue];
+  //pub_auto -> error           [label="user.config()"];
+  //pub_auto -> error           [label="user.acquire()"];
+    pub_auto -> pub_headless    [label="user.leave()"];
+    pub_auto -> pub_active      [label="user.auto()"];
+
+		edge[color=gray28;fontcolor=gray29];
+  //pub_headless -> error           [label="gm.config()"];
+    pub_headless -> pub_auto        [label="gm.assign()"];
+  //pub_headless -> error           [label="gm.resume()"];
+		edge[color=red4;fontcolor=red3];
+  //pub_headless -> error           [label="gm.dismiss()"];
+  //pub_headless -> error           [label="gm.suspend()"];
+    pub_headless -> pub_idle        [label="gm.reset()"];
+		edge[color=blue;fontcolor=blue];
+  //pub_headless -> error           [label="user.config()"];
+  //pub_headless -> error           [label="user.acquire()"];
+  //pub_headless -> error           [label="user.leave()"];
+  //pub_headless -> error           [label="user.auto()"];
+
+		edge[color=gray28;fontcolor=gray29];
+  //pub_suspended -> error           [label="gm.config()"];
+  //pub_suspended -> error           [label="gm.assign()"];
+    pub_suspended -> pub_active      [label="gm.resume()"];
+		edge[color=red4;fontcolor=red3];
+    pub_suspended -> pub_headless    [label="gm.dismiss()"];
+    pub_suspended -> pub_suspended   [label="gm.suspend()"];  // no-op
+    pub_suspended -> pub_idle        [label="gm.reset()"];
+		edge[color=blue;fontcolor=blue];
+  //pub_suspended -> error           [label="user.config()"];
+  //pub_suspended -> error           [label="user.acquire()"];
+    pub_suspended -> pub_headless    [label="user.leave()"];
+  //pub_suspended -> error           [label="user.auto()"];
+
+		label="PUBLIC";
+		graph[style=dotted,labelloc=b]
+  }
+}

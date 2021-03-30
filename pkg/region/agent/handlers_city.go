@@ -32,7 +32,7 @@ func (s *cityApp) List(req *proto.CitiesByCharReq, stream proto.City_ListServer)
 			}
 			for _, c := range tab {
 				last = c.ID
-				if c.Owner != req.Character && c.Deputy != req.Character {
+				if c.Owner != req.Character {
 					continue
 				}
 				err := stream.Send(showCityPublic(s.app.w, c, false))
@@ -47,7 +47,7 @@ func (s *cityApp) List(req *proto.CitiesByCharReq, stream proto.City_ListServer)
 	})
 }
 
-func (s *cityApp) AllCities(req *proto.PaginatedQuery, stream proto.City_AllCitiesServer) error {
+func (s *cityApp) AllCities(req *proto.PaginatedU64Query, stream proto.City_AllCitiesServer) error {
 	return s.app._regLock('r', req.Region, func(r *region.Region) error {
 		last := req.Marker
 		for {
@@ -69,7 +69,7 @@ func (s *cityApp) AllCities(req *proto.PaginatedQuery, stream proto.City_AllCiti
 	})
 }
 
-func (s *cityApp) Show(ctx context.Context, req *proto.CityId) (reply *proto.CityView, err error) {
+func (s *cityApp) ShowAll(ctx context.Context, req *proto.CityId) (reply *proto.CityView, err error) {
 	err = s.app.cityLock('r', req, func(r *region.Region, c *region.City) error {
 		view := showCity(s.app.w, c)
 		utils.Logger.Debug().

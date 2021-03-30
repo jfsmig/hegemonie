@@ -19,7 +19,7 @@ func showEvolution(w *region.World, c *region.City) *proto.CityEvolution {
 		})
 	}
 	for _, bt := range c.BuildingFrontier(w) {
-		cv.BFrontier = append(cv.BFrontier, &proto.BuildingTypeView{
+		cv.BFrontier = append(cv.BFrontier, &proto.BuildingTypeRef{
 			Id: bt.ID, Name: bt.Name,
 		})
 	}
@@ -153,11 +153,9 @@ func showCity(w *region.World, c *region.City) *proto.CityView {
 			Politics:  c.PoliticalGroup,
 		},
 
-		Owner:  c.Owner,
-		Deputy: c.Deputy,
+		Owner: c.Owner,
 
 		TickMassacres: c.TicksMassacres,
-		Auto:          c.Auto,
 
 		Politics: &proto.CityPolitics{
 			Overlord: c.Overlord,
@@ -264,4 +262,25 @@ func showCityStats(r *region.Region, c *region.City) *proto.CityStats {
 		UnitLost:         stats.Activity.UnitsLost,
 		UnitRaised:       stats.Activity.UnitsRaised,
 	}
+}
+
+func showCityTemplate(r *region.Region, c *region.City) *proto.CityTemplate {
+	rc := &proto.CityTemplate{}
+	rc.Public = showCityPublic(r.GetWorld(), c, false)
+	rc.Stock = resAbsM2P(c.Stock)
+	rc.StockCapacity = resAbsM2P(c.StockCapacity)
+	rc.Production = resAbsM2P(c.Production)
+	rc.BuildingTypes = make([]uint64, 0)
+	rc.SkillTypes = make([]uint64, 0)
+	rc.UnitTypes = make([]uint64, 0)
+	for _, x := range c.Buildings {
+		rc.BuildingTypes = append(rc.BuildingTypes, x.Type)
+	}
+	for _, x := range c.Knowledges {
+		rc.SkillTypes = append(rc.SkillTypes, x.Type)
+	}
+	for _, x := range c.Units {
+		rc.UnitTypes = append(rc.UnitTypes, x.Type)
+	}
+	return rc
 }

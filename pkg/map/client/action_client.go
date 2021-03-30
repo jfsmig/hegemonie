@@ -42,7 +42,7 @@ func (c *ClientCLI) GetCities(ctx context.Context, args PathArgs) error {
 		if err != nil {
 			return errors.Trace(err)
 		}
-		return utils.EncodeWhole(func() (interface{}, error) { return rep.Recv() })
+		return utils.EncodeStream(func() (interface{}, error) { return rep.Recv() })
 	})
 }
 

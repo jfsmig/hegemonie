@@ -40,7 +40,7 @@ func NewEventStoreClient(ctx context.Context) (region.Notifier, error) {
 
 type EventArmy struct {
 	store  *EventStore
-	charID string
+	userID string
 
 	SourceCityID uint64 `json:"SourceCityId"`
 	SourceCity   string `json:"SourceCity"`
@@ -68,7 +68,7 @@ type EventUnits struct {
 func (es *EventStore) Army(log *region.City) region.EventArmy {
 	return &EventArmy{
 		store:        es,
-		charID:       log.Owner,
+		userID:       log.Owner,
 		SourceCity:   log.Name,
 		SourceCityID: log.ID,
 	}
@@ -110,7 +110,7 @@ func (evt *EventArmy) Send() {
 
 	client := hegemonie_rpevent_proto.NewProducerClient(evt.store.cnx)
 	client.Push1(context.Background(), &hegemonie_rpevent_proto.Push1Req{
-		CharId:  evt.charID,
+		UserId:  evt.userID,
 		EvtId:   uuid.New().String(),
 		Payload: buffer.Bytes(),
 	})

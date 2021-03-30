@@ -20,10 +20,7 @@ src/
 # Vim temporary files
 **/.*.sw?
 
-# Auto-generated files
-**/*.pb.go
-**/*_auto*.go
-
+# CMake files
 **/CMakeCache.txt
 **/CMakeFiles
 **/Makefile

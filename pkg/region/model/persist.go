@@ -7,6 +7,7 @@ package region
 
 import (
 	"encoding/json"
+	"github.com/jfsmig/hegemonie/pkg/utils"
 	"github.com/juju/errors"
 	"os"
 	"path/filepath"
@@ -46,7 +47,8 @@ func walkJSON(path string, hook func(path string, decoder *json.Decoder) error) 
 }
 
 func (defs *DefinitionsBase) loadUnits(basedir string) error {
-	return walkJSON(basedir, func(_ string, decoder *json.Decoder) error {
+	return walkJSON(basedir, func(path string, decoder *json.Decoder) error {
+		utils.Logger.Info().Str("kind", "unit").Str("path", path).Msg("loading")
 		tmp := make([]*UnitType, 0)
 		if err := decoder.Decode(&tmp); err != nil {
 			return errors.NewNotValid(err, "invalid json")
@@ -57,7 +59,8 @@ func (defs *DefinitionsBase) loadUnits(basedir string) error {
 }
 
 func (defs *DefinitionsBase) loadKnowledge(basedir string) (err error) {
-	return walkJSON(basedir, func(_ string, decoder *json.Decoder) error {
+	return walkJSON(basedir, func(path string, decoder *json.Decoder) error {
+		utils.Logger.Info().Str("kind", "skill").Str("path", path).Msg("loading")
 		tmp := make([]*KnowledgeType, 0)
 		if err = decoder.Decode(&tmp); err != nil {
 			return errors.NewNotValid(err, "invalid json")
@@ -68,7 +71,8 @@ func (defs *DefinitionsBase) loadKnowledge(basedir string) (err error) {
 }
 
 func (defs *DefinitionsBase) loadBuildings(basedir string) (err error) {
-	return walkJSON(basedir, func(_ string, decoder *json.Decoder) error {
+	return walkJSON(basedir, func(path string, decoder *json.Decoder) error {
+		utils.Logger.Info().Str("kind", "building").Str("path", path).Msg("loading")
 		tmp := make([]*BuildingType, 0)
 		if err = decoder.Decode(&tmp); err != nil {
 			return errors.NewNotValid(err, "invalid json")
