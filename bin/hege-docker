@@ -17,18 +17,18 @@ if [[ $# == 0 ]] ; then
 else
   case $1 in
       build)
-				docker build --target="dependencies" --tag="jfsmig/hegemonie-dependencies" .
+				docker build --target="dependencies" --tag="hegemonie-rpg/engine-dependencies" .
 				docker build --target="builder" .
-				docker build --target="runtime" --tag="jfsmig/hegemonie" .
+				docker build --target="runtime" --tag="hegemonie-rpg/engine" .
 				;;
       push)
-				docker push "jfsmig/hegemonie:latest" &
-				docker push "jfsmig/hegemonie-dependencies:latest" &
+				docker push "hegemonie-rpg/engine:latest" &
+				docker push "hegemonie-rpg/engine-dependencies:latest" &
 				wait
 				;;
       clean)
-				docker image remove "jfsmig/hegemonie-dependencies" &
-				docker image remove "jfsmig/hegemonie" &
+				docker image remove "hegemonie-rpg/engine-dependencies" &
+				docker image remove "hegemonie-rpg/engine" &
 				wait
 				;;
 			up)

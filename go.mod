@@ -1,4 +1,4 @@
-module github.com/jfsmig/hegemonie
+module github.com/hegemonie-rpg/engine
 
 go 1.15
 

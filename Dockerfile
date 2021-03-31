@@ -39,16 +39,16 @@ RUN echo 'PATH=/gopath/bin:/go/bin:/usr/local/go/bin:$PATH\nexport PATH' >> /etc
 FROM dependencies AS builder
 
 USER 0
-WORKDIR /gopath/src/github.com/jfsmig/hegemonie
+WORKDIR /gopath/src/github.com/hegemonie-rpg/engine
 
 # Build & Install the code, then extract all the system deps. Inspired by:
 # https://dev.to/ivan/go-build-a-minimal-docker-image-in-just-three-steps-514i
-COPY go.sum go.mod /gopath/src/github.com/jfsmig/hegemonie/
+COPY go.sum go.mod /gopath/src/github.com/hegemonie-rpg/engine/
 RUN go mod download
 
-COPY Makefile LICENSE AUTHORS.md /gopath/src/github.com/jfsmig/hegemonie/
-COPY pkg /gopath/src/github.com/jfsmig/hegemonie/pkg
-COPY api /gopath/src/github.com/jfsmig/hegemonie/api
+COPY Makefile LICENSE AUTHORS.md /gopath/src/github.com/hegemonie-rpg/engine/
+COPY pkg /gopath/src/github.com/hegemonie-rpg/engine/pkg
+COPY api /gopath/src/github.com/hegemonie-rpg/engine/api
 RUN set -x \
 && echo $PATH \
 && . /etc/profile \

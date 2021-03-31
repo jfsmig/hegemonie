@@ -37,11 +37,11 @@ services:
   # Hegemonie
   # core services running game instances
   # https://www.hegemonie.be/
-  # https://github.com/jfsmig/hegemonie
+  # https://github.com/hegemonie-rpg/engine
   # -------------------------------------------------------------------------- #
 
   hege_regions:
-    image: "jfsmig/hegemonie"
+    image: "hegemonie-rpg/engine"
     expose:
       - "6000"
       - "6001"
@@ -55,7 +55,7 @@ services:
     command: server -v regions -f /etc/hegemonie/server.yml
 
   hege_events:
-    image: "jfsmig/hegemonie"
+    image: "hegemonie-rpg/engine"
     expose:
       - "6000"
       - "6001"
@@ -69,7 +69,7 @@ services:
     command: server -v events -f /etc/hegemonie/server.yml
 
   hege_maps:
-    image: "jfsmig/hegemonie"
+    image: "hegemonie-rpg/engine"
     expose:
       - "6000"
       - "6001"

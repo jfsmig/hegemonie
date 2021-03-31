@@ -7,11 +7,11 @@ The Hegemonie platform consist in a set of microservices.
 * **region server** is a tuple of 3 ``grpc`` services responsible for the game
   logic within a single region. The service itself is not authenticated. Please
   refer to the ``grpc`` description of the
-  [City API](https://github.com/jfsmig/hegemonie/blob/master/pkg/region/city.proto)
+  [City API](https://github.com/hegemonie-rpg/engine/blob/master/pkg/region/city.proto)
   ,
-  [Army API](https://github.com/jfsmig/hegemonie/blob/master/pkg/region/army.proto)
+  [Army API](https://github.com/hegemonie-rpg/engine/blob/master/pkg/region/army.proto)
   and
-  [Admin API](https://github.com/jfsmig/hegemonie/blob/master/pkg/region/admin.proto)
+  [Admin API](https://github.com/hegemonie-rpg/engine/blob/master/pkg/region/admin.proto)
   for more information.
 
 * **events server** is a ``grpc`` service to subscribe to events related to
@@ -42,7 +42,7 @@ In addition, side services act as technology enablers.
 * A [Prometheus](https://prometheus.io) service to keep the in-game statistics
   that serve the Game Mastery purpose.
 
-![Hegemonie Architecture](https://raw.githubusercontent.com/jfsmig/hegemonie/master/docs/system-architecture.png)
+![Hegemonie Architecture](https://raw.githubusercontent.com/hegemonie-rpg/engine/master/docs/system-architecture.png)
 
 ## A Single administration CLI
 
@@ -126,7 +126,7 @@ TL;DR:
 
 ```shell
 set -ex
-git clone https://github.com/jfsmig/hegemonie.git
+git clone https://github.com/hegemonie-rpg/engine.git
 cd hegemonie
 ./bin/hege-docker up
 ```
