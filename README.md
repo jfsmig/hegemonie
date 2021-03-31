@@ -7,7 +7,7 @@ details about the [gameplay](./GAME.md) on the dedicated page.
 
 [![CircleCI](https://circleci.com/gh/hegemonie-rpg/engine.svg?style=svg)](https://circleci.com/gh/hegemonie-rpg/engine)
 [![Codecov](https://codecov.io/gh/hegemonie-rpg/engine/branch/master/graph/badge.svg)](https://codecov.io/gh/hegemonie-rpg/engine)
-[![Codacy](https://app.codacy.com/project/badge/Grade/bf7c2872c60445c99f914d31d7b213ae)](https://www.codacy.com/manual/hegemonie-rpg/engine?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=hegemonie-rpg/engine&amp;utm_campaign=Badge_Grade)
+[![Codacy](https://app.codacy.com/project/badge/Grade/e5bf8a1f6d1442e39265183be0a6112b)](https://www.codacy.com/gh/hegemonie-rpg/engine/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=hegemonie-rpg/engine&amp;utm_campaign=Badge_Grade)
 [![MPL-2.0](https://img.shields.io/badge/License-MPL%202.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
 
 ## Getting Started
