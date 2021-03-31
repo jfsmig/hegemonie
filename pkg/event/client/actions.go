@@ -9,8 +9,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/google/uuid"
-	"github.com/jfsmig/hegemonie/pkg/event/proto"
-	"github.com/jfsmig/hegemonie/pkg/utils"
+	"github.com/hegemonie-rpg/engine/pkg/event/proto"
+	"github.com/hegemonie-rpg/engine/pkg/utils"
 	"github.com/juju/errors"
 	"google.golang.org/grpc"
 )

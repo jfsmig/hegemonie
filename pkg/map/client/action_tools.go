@@ -8,7 +8,7 @@ package mapclient
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/jfsmig/hegemonie/pkg/utils"
+	"github.com/hegemonie-rpg/engine/pkg/utils"
 	"github.com/juju/errors"
 	"os"
 )

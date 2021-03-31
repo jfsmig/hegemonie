@@ -88,9 +88,9 @@ func TestSetOfTwoFieldUS(t *testing.T) {
 }
 
 // Only the tests around the functional cases are tested here.
-//go:generate go run github.com/jfsmig/hegemonie/pkg/gen-set ./genset_auto_test.go main:setOfUint64:uint64 :uint64
-//go:generate go run github.com/jfsmig/hegemonie/pkg/gen-set ./genset_auto_test.go main:setOfString:string :string
-//go:generate go run github.com/jfsmig/hegemonie/pkg/gen-set ./genset_auto_test.go main:setOfSingleUint64:*singleUint64Field f0:uint64
-//go:generate go run github.com/jfsmig/hegemonie/pkg/gen-set ./genset_auto_test.go main:setOfSingleString:*singleStringField f0:string
-//go:generate go run github.com/jfsmig/hegemonie/pkg/gen-set ./genset_auto_test.go main:setOfTwoFieldsSU:*twoFieldsSU f0:string f1:uint64
-//go:generate go run github.com/jfsmig/hegemonie/pkg/gen-set ./genset_auto_test.go main:setOfTwoFieldsUS:*twoFieldsUS f0:uint64 f1:string
+//go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./genset_auto_test.go main:setOfUint64:uint64 :uint64
+//go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./genset_auto_test.go main:setOfString:string :string
+//go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./genset_auto_test.go main:setOfSingleUint64:*singleUint64Field f0:uint64
+//go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./genset_auto_test.go main:setOfSingleString:*singleStringField f0:string
+//go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./genset_auto_test.go main:setOfTwoFieldsSU:*twoFieldsSU f0:string f1:uint64
+//go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./genset_auto_test.go main:setOfTwoFieldsUS:*twoFieldsUS f0:uint64 f1:string

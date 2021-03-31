@@ -8,9 +8,9 @@ package regagent
 import (
 	"context"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
-	"github.com/jfsmig/hegemonie/pkg/region/model"
-	"github.com/jfsmig/hegemonie/pkg/region/proto"
-	"github.com/jfsmig/hegemonie/pkg/utils"
+	"github.com/hegemonie-rpg/engine/pkg/region/model"
+	"github.com/hegemonie-rpg/engine/pkg/region/proto"
+	"github.com/hegemonie-rpg/engine/pkg/utils"
 	"github.com/juju/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"

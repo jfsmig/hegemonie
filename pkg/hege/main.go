@@ -6,7 +6,7 @@
 package main
 
 import (
-	"github.com/jfsmig/hegemonie/pkg/utils"
+	"github.com/hegemonie-rpg/engine/pkg/utils"
 	"github.com/juju/errors"
 	"github.com/spf13/cobra"
 	"log"

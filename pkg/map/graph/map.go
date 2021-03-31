@@ -46,11 +46,11 @@ type Map struct {
 	steps map[vector]uint64
 }
 
-//go:generate go run github.com/jfsmig/hegemonie/pkg/gen-set ./map_auto.go mapgraph:SetOfVertices:*Vertex ID:uint64
+//go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./map_auto.go mapgraph:SetOfVertices:*Vertex ID:uint64
 
-//go:generate go run github.com/jfsmig/hegemonie/pkg/gen-set ./map_auto.go mapgraph:SetOfEdges:*Edge S:uint64 D:uint64
+//go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./map_auto.go mapgraph:SetOfEdges:*Edge S:uint64 D:uint64
 
-//go:generate go run github.com/jfsmig/hegemonie/pkg/gen-set ./map_auto.go mapgraph:SetOfMaps:*Map ID:string
+//go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./map_auto.go mapgraph:SetOfMaps:*Map ID:string
 
 // EmptyMap builds a graph with no edge and no vertex.
 func EmptyMap() Map {

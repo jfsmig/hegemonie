@@ -8,8 +8,8 @@ package regagent
 import (
 	"context"
 	"github.com/google/uuid"
-	region "github.com/jfsmig/hegemonie/pkg/region/model"
-	proto "github.com/jfsmig/hegemonie/pkg/region/proto"
+	region "github.com/hegemonie-rpg/engine/pkg/region/model"
+	proto "github.com/hegemonie-rpg/engine/pkg/region/proto"
 	"github.com/juju/errors"
 	"io"
 )

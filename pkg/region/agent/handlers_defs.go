@@ -6,7 +6,7 @@
 package regagent
 
 import (
-	proto "github.com/jfsmig/hegemonie/pkg/region/proto"
+	proto "github.com/hegemonie-rpg/engine/pkg/region/proto"
 	"io"
 )
 

@@ -7,7 +7,7 @@ package region
 
 import (
 	"context"
-	"github.com/jfsmig/hegemonie/pkg/utils"
+	"github.com/hegemonie-rpg/engine/pkg/utils"
 	"testing"
 )
 

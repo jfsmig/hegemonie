@@ -8,9 +8,9 @@ package evtagent
 import (
 	"context"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
-	back "github.com/jfsmig/hegemonie/pkg/event/backend-local"
-	"github.com/jfsmig/hegemonie/pkg/event/proto"
-	"github.com/jfsmig/hegemonie/pkg/utils"
+	back "github.com/hegemonie-rpg/engine/pkg/event/backend-local"
+	"github.com/hegemonie-rpg/engine/pkg/event/proto"
+	"github.com/hegemonie-rpg/engine/pkg/utils"
 	"github.com/juju/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health/grpc_health_v1"

@@ -7,8 +7,8 @@ package regagent
 
 import (
 	"context"
-	"github.com/jfsmig/hegemonie/pkg/region/model"
-	"github.com/jfsmig/hegemonie/pkg/region/proto"
+	"github.com/hegemonie-rpg/engine/pkg/region/model"
+	"github.com/hegemonie-rpg/engine/pkg/region/proto"
 )
 
 type armyApp struct {

@@ -10,9 +10,9 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/google/uuid"
-	hegemonie_rpevent_proto "github.com/jfsmig/hegemonie/pkg/event/proto"
-	"github.com/jfsmig/hegemonie/pkg/region/model"
-	"github.com/jfsmig/hegemonie/pkg/utils"
+	hegemonie_rpevent_proto "github.com/hegemonie-rpg/engine/pkg/event/proto"
+	"github.com/hegemonie-rpg/engine/pkg/region/model"
+	"github.com/hegemonie-rpg/engine/pkg/utils"
 	"github.com/juju/errors"
 	"google.golang.org/grpc"
 )

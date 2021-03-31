@@ -7,13 +7,13 @@ package regagent
 
 import (
 	"context"
-	"github.com/jfsmig/hegemonie/pkg/region/model"
-	"github.com/jfsmig/hegemonie/pkg/utils"
+	"github.com/hegemonie-rpg/engine/pkg/region/model"
+	"github.com/hegemonie-rpg/engine/pkg/utils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"io"
 
-	proto "github.com/jfsmig/hegemonie/pkg/region/proto"
+	proto "github.com/hegemonie-rpg/engine/pkg/region/proto"
 )
 
 type cityApp struct {

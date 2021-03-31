@@ -571,15 +571,15 @@ type Fight struct {
 
 type SetOfFights []*Fight
 
-//go:generate go run github.com/jfsmig/hegemonie/pkg/gen-set ./world_auto.go region:SetOfArtifacts:*Artifact ID:string
-//go:generate go run github.com/jfsmig/hegemonie/pkg/gen-set ./world_auto.go region:SetOfArmies:*Army ID:string
-//go:generate go run github.com/jfsmig/hegemonie/pkg/gen-set ./world_auto.go region:SetOfBuildings:*Building ID:string
-//go:generate go run github.com/jfsmig/hegemonie/pkg/gen-set ./world_auto.go region:SetOfBuildingTypes:*BuildingType
-//go:generate go run github.com/jfsmig/hegemonie/pkg/gen-set ./world_auto.go region:SetOfCities:*City
-//go:generate go run github.com/jfsmig/hegemonie/pkg/gen-set ./world_auto.go region:SetOfTemplates:*City Name:string
-//go:generate go run github.com/jfsmig/hegemonie/pkg/gen-set ./world_auto.go region:SetOfId:uint64 :uint64
-//go:generate go run github.com/jfsmig/hegemonie/pkg/gen-set ./world_auto.go region:SetOfKnowledges:*Knowledge ID:string
-//go:generate go run github.com/jfsmig/hegemonie/pkg/gen-set ./world_auto.go region:SetOfKnowledgeTypes:*KnowledgeType
-//go:generate go run github.com/jfsmig/hegemonie/pkg/gen-set ./world_auto.go region:SetOfUnits:*Unit ID:string
-//go:generate go run github.com/jfsmig/hegemonie/pkg/gen-set ./world_auto.go region:SetOfUnitTypes:*UnitType
-//go:generate go run github.com/jfsmig/hegemonie/pkg/gen-set ./world_auto.go region:SetOfRegions:*Region Name:string
+//go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./world_auto.go region:SetOfArtifacts:*Artifact ID:string
+//go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./world_auto.go region:SetOfArmies:*Army ID:string
+//go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./world_auto.go region:SetOfBuildings:*Building ID:string
+//go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./world_auto.go region:SetOfBuildingTypes:*BuildingType
+//go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./world_auto.go region:SetOfCities:*City
+//go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./world_auto.go region:SetOfTemplates:*City Name:string
+//go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./world_auto.go region:SetOfId:uint64 :uint64
+//go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./world_auto.go region:SetOfKnowledges:*Knowledge ID:string
+//go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./world_auto.go region:SetOfKnowledgeTypes:*KnowledgeType
+//go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./world_auto.go region:SetOfUnits:*Unit ID:string
+//go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./world_auto.go region:SetOfUnitTypes:*UnitType
+//go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./world_auto.go region:SetOfRegions:*Region Name:string

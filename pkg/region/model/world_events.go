@@ -6,7 +6,7 @@
 package region
 
 import (
-	"github.com/jfsmig/hegemonie/pkg/utils"
+	"github.com/hegemonie-rpg/engine/pkg/utils"
 	"github.com/rs/zerolog"
 )
 

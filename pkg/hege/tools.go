@@ -7,8 +7,8 @@ package main
 
 import (
 	"context"
-	"github.com/jfsmig/hegemonie/pkg/map/client"
-	regclient "github.com/jfsmig/hegemonie/pkg/region/client"
+	"github.com/hegemonie-rpg/engine/pkg/map/client"
+	regclient "github.com/hegemonie-rpg/engine/pkg/region/client"
 	"github.com/spf13/cobra"
 )
 

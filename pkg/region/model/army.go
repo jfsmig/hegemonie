@@ -9,7 +9,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/google/uuid"
-	"github.com/jfsmig/hegemonie/pkg/utils"
+	"github.com/hegemonie-rpg/engine/pkg/utils"
 	"github.com/juju/errors"
 	"math/rand"
 	"sort"

@@ -9,7 +9,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/go-openapi/strfmt"
-	"github.com/jfsmig/hegemonie/pkg/utils"
+	"github.com/hegemonie-rpg/engine/pkg/utils"
 	"github.com/juju/errors"
 	keto "github.com/ory/keto-client-go/client"
 	keto_engines "github.com/ory/keto-client-go/client/engines"

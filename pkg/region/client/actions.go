@@ -8,9 +8,9 @@ package regclient
 import (
 	"context"
 	"encoding/json"
-	region "github.com/jfsmig/hegemonie/pkg/region/model"
-	"github.com/jfsmig/hegemonie/pkg/region/proto"
-	"github.com/jfsmig/hegemonie/pkg/utils"
+	region "github.com/hegemonie-rpg/engine/pkg/region/model"
+	"github.com/hegemonie-rpg/engine/pkg/region/proto"
+	"github.com/hegemonie-rpg/engine/pkg/utils"
 	"github.com/juju/errors"
 	"google.golang.org/grpc"
 	"os"

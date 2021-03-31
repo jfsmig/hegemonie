@@ -6,8 +6,8 @@
 package regagent
 
 import (
-	"github.com/jfsmig/hegemonie/pkg/region/model"
-	proto "github.com/jfsmig/hegemonie/pkg/region/proto"
+	"github.com/hegemonie-rpg/engine/pkg/region/model"
+	proto "github.com/hegemonie-rpg/engine/pkg/region/proto"
 )
 
 func showEvolution(w *region.World, c *region.City) *proto.CityEvolution {
