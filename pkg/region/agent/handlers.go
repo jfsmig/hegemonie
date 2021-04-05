@@ -16,6 +16,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/status"
+	"strconv"
 )
 
 // Config gathers the configuration fields required to start a gRPC region API service.
@@ -24,7 +25,7 @@ type Config struct {
 	PathLive string `yaml:"live" json:"live"`
 }
 
-type regionApp struct {
+type regionBackend struct {
 	cfg Config
 	w   *region.World
 }
@@ -75,16 +76,19 @@ func (cfg Config) Application(ctx context.Context) (utils.RegisterableMonitorabl
 	}
 	w.SetMapClient(mc)
 
-	return &regionApp{w: w, cfg: cfg}, nil
+	return &regionBackend{w: w, cfg: cfg}, nil
 }
 
 // Register pugs the internal gRPC routes into the given server
-func (app *regionApp) Register(grpcSrv *grpc.Server) error {
-	proto.RegisterCityServer(grpcSrv, &cityApp{app: app})
-	proto.RegisterDefinitionsServer(grpcSrv, &defsApp{app: app})
+func (app *regionBackend) Register(grpcSrv *grpc.Server) error {
 	proto.RegisterAdminServer(grpcSrv, &adminApp{app: app})
-	proto.RegisterArmyServer(grpcSrv, &armyApp{app: app})
+	proto.RegisterGameMasterServer(grpcSrv, &gmApp{app: app})
 	proto.RegisterTemplatesServer(grpcSrv, &templatesApp{app: app})
+	proto.RegisterPlayerServer(grpcSrv, &playerApp{app: app})
+	proto.RegisterCityServer(grpcSrv, &cityApp{app: app})
+	proto.RegisterArmyServer(grpcSrv, &armyApp{app: app})
+	proto.RegisterDefinitionsServer(grpcSrv, &defsApp{app: app})
+	proto.RegisterPublicServer(grpcSrv, &publicApp{app: app})
 	grpc_prometheus.Register(grpcSrv)
 
 	utils.Logger.Info().
@@ -96,11 +100,11 @@ func (app *regionApp) Register(grpcSrv *grpc.Server) error {
 }
 
 // Make the RegionApp monitorable by the server stub
-func (app *regionApp) Check(ctx context.Context) grpc_health_v1.HealthCheckResponse_ServingStatus {
+func (app *regionBackend) Check(ctx context.Context) grpc_health_v1.HealthCheckResponse_ServingStatus {
 	return grpc_health_v1.HealthCheckResponse_SERVING
 }
 
-func (app *regionApp) _worldLock(mode rune, action func() error) error {
+func (app *regionBackend) _worldLock(mode rune, action func() error) error {
 	switch mode {
 	case 'r':
 		app.w.RLock()
@@ -114,7 +118,7 @@ func (app *regionApp) _worldLock(mode rune, action func() error) error {
 	return action()
 }
 
-func (app *regionApp) _regLock(mode rune, regID string, action func(*region.Region) error) error {
+func (app *regionBackend) _regLock(mode rune, regID string, action func(*region.Region) error) error {
 	switch mode {
 	case 'r':
 		app.w.RLock()
@@ -132,7 +136,7 @@ func (app *regionApp) _regLock(mode rune, regID string, action func(*region.Regi
 	return action(r)
 }
 
-func (app *regionApp) cityLock(mode rune, req *proto.CityId, action func(*region.Region, *region.City) error) error {
+func (app *regionBackend) cityLock(mode rune, req *proto.CityId, action func(*region.Region, *region.City) error) error {
 	return app._regLock('r', req.Region, func(r *region.Region) error {
 		switch mode {
 		case 'r':
@@ -147,16 +151,13 @@ func (app *regionApp) cityLock(mode rune, req *proto.CityId, action func(*region
 		if c == nil {
 			return status.Error(codes.NotFound, "no such city")
 		}
-		if c.Owner != req.Character {
-			return status.Error(codes.PermissionDenied, "permission denied")
-		}
-
+		// TODO FIXME(jfs): check the permissions
 		return action(r, c)
 	})
 }
 
-func (app *regionApp) armyLock(mode rune, req *proto.ArmyId, action func(*region.Region, *region.City, *region.Army) error) error {
-	cID := proto.CityId{Region: req.Region, City: req.City, Character: req.Character}
+func (app *regionBackend) armyLock(mode rune, req *proto.ArmyId, action func(*region.Region, *region.City, *region.Army) error) error {
+	cID := proto.CityId{Region: req.Region, City: req.City}
 	return app.cityLock(mode, &cID, func(r *region.Region, c *region.City) error {
 		a := c.Armies.Get(req.Army)
 		if a == nil {
@@ -165,3 +166,5 @@ func (app *regionApp) armyLock(mode rune, req *proto.ArmyId, action func(*region
 		return action(r, c, a)
 	})
 }
+
+func s(u uint64) string { return strconv.FormatUint(u, 10) }

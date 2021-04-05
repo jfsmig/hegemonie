@@ -15,7 +15,7 @@ import (
 func MakeCity() *City {
 	return &City{
 		ID:         0,
-		State:      CityStateIdle,
+		State:      CityStatePrivIdle,
 		Units:      make(SetOfUnits, 0),
 		Buildings:  make(SetOfBuildings, 0),
 		Knowledges: make(SetOfKnowledges, 0),
@@ -24,7 +24,16 @@ func MakeCity() *City {
 	}
 }
 
-func (c *City) Apply(model *City) {
+func (c *City) ApplyNamedModel(r *Region, modelName string) error {
+	m := r.Models.Get(modelName)
+	if m == nil {
+		return errors.NotFoundf("no such model %s", modelName)
+	}
+	c.ApplyModel(m)
+	return nil
+}
+
+func (c *City) ApplyModel(model *City) {
 	c.Owner = ""
 	c.Overlord = 0
 	c.TaxRate.SetValue(0.0)
@@ -95,10 +104,16 @@ func (c *City) GetKnowledge(id string) *Knowledge {
 	return c.Knowledges.Get(id)
 }
 
-// GetActualPopularity returns the total Popularity of the current City
+// GetLieges returns a list of all the Lieges of the current City.
+func (c *City) GetLieges() []*City {
+	return c.lieges[:]
+}
+
+// ComputePopularity returns the total Popularity of the current City
 // (permanent + transient)
-func (c *City) GetActualPopularity(w *World) int64 {
-	var pop int64 = c.PermanentPopularity
+func (c *City) ComputePopularity(r *Region) int64 {
+	w := r.GetWorld()
+	pop := c.PermanentPopularity
 
 	// Add Transient values for Units in the Armies
 	for _, a := range c.Armies {
@@ -130,10 +145,11 @@ func (c *City) GetActualPopularity(w *World) int64 {
 	return pop
 }
 
-// GetProduction computes the actual production of the local City,
+// ComputeProduction computes the actual production of the local City,
 // and a summary of the main steps leading to the result. In other words,
 // a summary of all the City assets that have an impact.
-func (c *City) GetProduction(w *World) *CityProduction {
+func (c *City) ComputeProduction(r *Region) *CityProduction {
+	w := r.GetWorld()
 	p := &CityProduction{
 		Buildings: ResourceModifierNoop(),
 		Knowledge: ResourceModifierNoop(),
@@ -154,14 +170,15 @@ func (c *City) GetProduction(w *World) *CityProduction {
 	return p
 }
 
-// GetStock computes the actual stock of the local City, and a summary of the
+// ComputeStock computes the actual stock of the local City, and a summary of the
 // main steps leading to the result. In other words, a summary of all the City
 // assets that have an impact.
-func (c *City) GetStock(w *World) *CityStock {
+func (c *City) ComputeStock(r *Region) *CityStock {
 	p := &CityStock{
 		Buildings: ResourceModifierNoop(),
 		Knowledge: ResourceModifierNoop(),
 	}
+	w := r.GetWorld()
 
 	for _, b := range c.Buildings {
 		t := w.BuildingTypeGet(b.Type)
@@ -179,15 +196,11 @@ func (c *City) GetStock(w *World) *CityStock {
 	return p
 }
 
-// GetLieges returns a list of all the Lieges of the current City.
-func (c *City) GetLieges() []*City {
-	return c.lieges[:]
-}
-
-// GetStats computes the gauges and extract the counters to build a CityStats
+// ComputeStats computes the gauges and extract the counters to build a CityStats
 // about the current City.
-func (c *City) GetStats(w *Region) CityStats {
-	stock := c.GetStock(w.world)
+func (c *City) ComputeStats(r *Region) CityStats {
+	stock := c.ComputeStock(r)
+	popularity := c.ComputePopularity(r)
 	return CityStats{
 		Activity:       c.Counters,
 		StockCapacity:  stock.Actual,
@@ -195,10 +208,12 @@ func (c *City) GetStats(w *Region) CityStats {
 		ScoreBuildings: uint64(c.Buildings.Len()),
 		ScoreKnowledge: uint64(c.Knowledges.Len()),
 		ScoreMilitary:  uint64(c.Armies.Len()),
+		Popularity:     popularity,
 	}
 }
 
-func (c *City) CreateEmptyArmy(w *Region) *Army {
+// CreateEmptyArmy
+func (c *City) CreateEmptyArmy(_ *Region) *Army {
 	aid := uuid.New().String()
 	a := &Army{
 		ID:       aid,
@@ -282,8 +297,8 @@ func (c *City) ProduceLocally(w *Region, p *CityProduction) Resources {
 func (c *City) Produce(_ context.Context, w *Region) {
 	// Pre-compute the modified values of Stock and Production.
 	// We just reuse a function that already does it (despite it does more)
-	prod0 := c.GetProduction(w.world)
-	stock := c.GetStock(w.world)
+	prod0 := c.ComputeProduction(w)
+	stock := c.ComputeStock(w)
 
 	// Make the local City generate resources (and recover the massacres)
 	prod := c.ProduceLocally(w, prod0)
@@ -465,19 +480,19 @@ func (c *City) TransferOwnUnit(a *Army, units ...string) error {
 	return nil
 }
 
-func (c *City) KnowledgeFrontier(w *World) []*KnowledgeType {
-	return w.KnowledgeGetFrontier(c.Knowledges)
+func (c *City) KnowledgeFrontier(w *Region) []*KnowledgeType {
+	return w.GetWorld().KnowledgeGetFrontier(c.Knowledges)
 }
 
-func (c *City) BuildingFrontier(w *World) []*BuildingType {
-	return w.BuildingGetFrontier(c.GetActualPopularity(w), c.Buildings, c.Knowledges)
+func (c *City) BuildingFrontier(w *Region) []*BuildingType {
+	return w.GetWorld().BuildingGetFrontier(c.ComputePopularity(w), c.Buildings, c.Knowledges)
 }
 
 // Return a collection of UnitType that may be trained by the current City
 // because all the requirements are met.
 // Each UnitType 'p' returned validates 'c.UnitAllowed(p)'.
-func (c *City) UnitFrontier(w *World) []*UnitType {
-	return w.UnitGetFrontier(c.Buildings)
+func (c *City) UnitFrontier(w *Region) []*UnitType {
+	return w.GetWorld().UnitGetFrontier(c.Buildings)
 }
 
 // check the current City has all the requirements to train a Unti of the

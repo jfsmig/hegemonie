@@ -17,7 +17,7 @@ import (
 type templatesApp struct {
 	proto.UnimplementedTemplatesServer
 
-	app *regionApp
+	app *regionBackend
 }
 
 func (app *templatesApp) ListTemplates(req *proto.PaginatedStrQuery, stream proto.Templates_ListTemplatesServer) error {

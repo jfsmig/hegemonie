@@ -18,19 +18,11 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AdminClient interface {
-	//
-	CreateRegion(ctx context.Context, in *RegionCreateReq, opts ...grpc.CallOption) (*None, error)
-	ListRegions(ctx context.Context, in *RegionListReq, opts ...grpc.CallOption) (Admin_ListRegionsClient, error)
-	// Have all the Cities on the Region to produce their resources
-	Produce(ctx context.Context, in *RegionId, opts ...grpc.CallOption) (*None, error)
-	// Make all the armies on the Region to move on step
-	Move(ctx context.Context, in *RegionId, opts ...grpc.CallOption) (*None, error)
-	// Compute the scoreboard of the region.
-	GetScores(ctx context.Context, in *RegionId, opts ...grpc.CallOption) (Admin_GetScoresClient, error)
+	// Instantiate a region on the target server
+	CreateRegion(ctx context.Context, in *RegionCreateReq, opts ...grpc.CallOption) (*Created, error)
 	// PushStats extracts the usage in-game stats of each city in the given
 	// region and pushes them to the collector.
 	PushStats(ctx context.Context, in *RegionId, opts ...grpc.CallOption) (*None, error)
-	GetStats(ctx context.Context, in *RegionId, opts ...grpc.CallOption) (Admin_GetStatsClient, error)
 }
 
 type adminClient struct {
@@ -41,95 +33,13 @@ func NewAdminClient(cc grpc.ClientConnInterface) AdminClient {
 	return &adminClient{cc}
 }
 
-func (c *adminClient) CreateRegion(ctx context.Context, in *RegionCreateReq, opts ...grpc.CallOption) (*None, error) {
-	out := new(None)
+func (c *adminClient) CreateRegion(ctx context.Context, in *RegionCreateReq, opts ...grpc.CallOption) (*Created, error) {
+	out := new(Created)
 	err := c.cc.Invoke(ctx, "/hege.reg.Admin/CreateRegion", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
-}
-
-func (c *adminClient) ListRegions(ctx context.Context, in *RegionListReq, opts ...grpc.CallOption) (Admin_ListRegionsClient, error) {
-	stream, err := c.cc.NewStream(ctx, &Admin_ServiceDesc.Streams[0], "/hege.reg.Admin/ListRegions", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &adminListRegionsClient{stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
-}
-
-type Admin_ListRegionsClient interface {
-	Recv() (*RegionSummary, error)
-	grpc.ClientStream
-}
-
-type adminListRegionsClient struct {
-	grpc.ClientStream
-}
-
-func (x *adminListRegionsClient) Recv() (*RegionSummary, error) {
-	m := new(RegionSummary)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-func (c *adminClient) Produce(ctx context.Context, in *RegionId, opts ...grpc.CallOption) (*None, error) {
-	out := new(None)
-	err := c.cc.Invoke(ctx, "/hege.reg.Admin/Produce", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *adminClient) Move(ctx context.Context, in *RegionId, opts ...grpc.CallOption) (*None, error) {
-	out := new(None)
-	err := c.cc.Invoke(ctx, "/hege.reg.Admin/Move", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *adminClient) GetScores(ctx context.Context, in *RegionId, opts ...grpc.CallOption) (Admin_GetScoresClient, error) {
-	stream, err := c.cc.NewStream(ctx, &Admin_ServiceDesc.Streams[1], "/hege.reg.Admin/GetScores", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &adminGetScoresClient{stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
-}
-
-type Admin_GetScoresClient interface {
-	Recv() (*PublicCity, error)
-	grpc.ClientStream
-}
-
-type adminGetScoresClient struct {
-	grpc.ClientStream
-}
-
-func (x *adminGetScoresClient) Recv() (*PublicCity, error) {
-	m := new(PublicCity)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
 }
 
 func (c *adminClient) PushStats(ctx context.Context, in *RegionId, opts ...grpc.CallOption) (*None, error) {
@@ -141,55 +51,15 @@ func (c *adminClient) PushStats(ctx context.Context, in *RegionId, opts ...grpc.
 	return out, nil
 }
 
-func (c *adminClient) GetStats(ctx context.Context, in *RegionId, opts ...grpc.CallOption) (Admin_GetStatsClient, error) {
-	stream, err := c.cc.NewStream(ctx, &Admin_ServiceDesc.Streams[2], "/hege.reg.Admin/GetStats", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &adminGetStatsClient{stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
-}
-
-type Admin_GetStatsClient interface {
-	Recv() (*CityStats, error)
-	grpc.ClientStream
-}
-
-type adminGetStatsClient struct {
-	grpc.ClientStream
-}
-
-func (x *adminGetStatsClient) Recv() (*CityStats, error) {
-	m := new(CityStats)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
 // AdminServer is the server API for Admin service.
 // All implementations must embed UnimplementedAdminServer
 // for forward compatibility
 type AdminServer interface {
-	//
-	CreateRegion(context.Context, *RegionCreateReq) (*None, error)
-	ListRegions(*RegionListReq, Admin_ListRegionsServer) error
-	// Have all the Cities on the Region to produce their resources
-	Produce(context.Context, *RegionId) (*None, error)
-	// Make all the armies on the Region to move on step
-	Move(context.Context, *RegionId) (*None, error)
-	// Compute the scoreboard of the region.
-	GetScores(*RegionId, Admin_GetScoresServer) error
+	// Instantiate a region on the target server
+	CreateRegion(context.Context, *RegionCreateReq) (*Created, error)
 	// PushStats extracts the usage in-game stats of each city in the given
 	// region and pushes them to the collector.
 	PushStats(context.Context, *RegionId) (*None, error)
-	GetStats(*RegionId, Admin_GetStatsServer) error
 	mustEmbedUnimplementedAdminServer()
 }
 
@@ -197,26 +67,11 @@ type AdminServer interface {
 type UnimplementedAdminServer struct {
 }
 
-func (UnimplementedAdminServer) CreateRegion(context.Context, *RegionCreateReq) (*None, error) {
+func (UnimplementedAdminServer) CreateRegion(context.Context, *RegionCreateReq) (*Created, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateRegion not implemented")
-}
-func (UnimplementedAdminServer) ListRegions(*RegionListReq, Admin_ListRegionsServer) error {
-	return status.Errorf(codes.Unimplemented, "method ListRegions not implemented")
-}
-func (UnimplementedAdminServer) Produce(context.Context, *RegionId) (*None, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Produce not implemented")
-}
-func (UnimplementedAdminServer) Move(context.Context, *RegionId) (*None, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Move not implemented")
-}
-func (UnimplementedAdminServer) GetScores(*RegionId, Admin_GetScoresServer) error {
-	return status.Errorf(codes.Unimplemented, "method GetScores not implemented")
 }
 func (UnimplementedAdminServer) PushStats(context.Context, *RegionId) (*None, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PushStats not implemented")
-}
-func (UnimplementedAdminServer) GetStats(*RegionId, Admin_GetStatsServer) error {
-	return status.Errorf(codes.Unimplemented, "method GetStats not implemented")
 }
 func (UnimplementedAdminServer) mustEmbedUnimplementedAdminServer() {}
 
@@ -249,84 +104,6 @@ func _Admin_CreateRegion_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Admin_ListRegions_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(RegionListReq)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
-	}
-	return srv.(AdminServer).ListRegions(m, &adminListRegionsServer{stream})
-}
-
-type Admin_ListRegionsServer interface {
-	Send(*RegionSummary) error
-	grpc.ServerStream
-}
-
-type adminListRegionsServer struct {
-	grpc.ServerStream
-}
-
-func (x *adminListRegionsServer) Send(m *RegionSummary) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-func _Admin_Produce_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RegionId)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AdminServer).Produce(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/hege.reg.Admin/Produce",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AdminServer).Produce(ctx, req.(*RegionId))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Admin_Move_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RegionId)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AdminServer).Move(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/hege.reg.Admin/Move",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AdminServer).Move(ctx, req.(*RegionId))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Admin_GetScores_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(RegionId)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
-	}
-	return srv.(AdminServer).GetScores(m, &adminGetScoresServer{stream})
-}
-
-type Admin_GetScoresServer interface {
-	Send(*PublicCity) error
-	grpc.ServerStream
-}
-
-type adminGetScoresServer struct {
-	grpc.ServerStream
-}
-
-func (x *adminGetScoresServer) Send(m *PublicCity) error {
-	return x.ServerStream.SendMsg(m)
-}
-
 func _Admin_PushStats_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RegionId)
 	if err := dec(in); err != nil {
@@ -345,27 +122,6 @@ func _Admin_PushStats_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Admin_GetStats_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(RegionId)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
-	}
-	return srv.(AdminServer).GetStats(m, &adminGetStatsServer{stream})
-}
-
-type Admin_GetStatsServer interface {
-	Send(*CityStats) error
-	grpc.ServerStream
-}
-
-type adminGetStatsServer struct {
-	grpc.ServerStream
-}
-
-func (x *adminGetStatsServer) Send(m *CityStats) error {
-	return x.ServerStream.SendMsg(m)
-}
-
 // Admin_ServiceDesc is the grpc.ServiceDesc for Admin service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -378,92 +134,482 @@ var Admin_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Admin_CreateRegion_Handler,
 		},
 		{
-			MethodName: "Produce",
-			Handler:    _Admin_Produce_Handler,
-		},
-		{
-			MethodName: "Move",
-			Handler:    _Admin_Move_Handler,
-		},
-		{
 			MethodName: "PushStats",
 			Handler:    _Admin_PushStats_Handler,
 		},
 	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "region.proto",
+}
+
+// GameMasterClient is the client API for GameMaster service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type GameMasterClient interface {
+	// Have all the Cities on the Region to produce their resources
+	Produce(ctx context.Context, in *RegionId, opts ...grpc.CallOption) (*None, error)
+	// Make all the armies on the Region to move on step
+	Move(ctx context.Context, in *RegionId, opts ...grpc.CallOption) (*None, error)
+	// Compute core statistics for the whole region.
+	GetStats(ctx context.Context, in *RegionId, opts ...grpc.CallOption) (GameMaster_GetStatsClient, error)
+	GetDetail(ctx context.Context, in *CityId, opts ...grpc.CallOption) (*CityView, error)
+	LifecycleConfigure(ctx context.Context, in *LifecycleConfigureReq, opts ...grpc.CallOption) (*None, error)
+	LifecycleAssign(ctx context.Context, in *LifecycleAssignReq, opts ...grpc.CallOption) (*None, error)
+	LifecycleResume(ctx context.Context, in *LifecycleAbstractReq, opts ...grpc.CallOption) (*None, error)
+	LifecycleDismiss(ctx context.Context, in *LifecycleAbstractReq, opts ...grpc.CallOption) (*None, error)
+	LifecycleSuspend(ctx context.Context, in *LifecycleAbstractReq, opts ...grpc.CallOption) (*None, error)
+	LifecycleReset(ctx context.Context, in *LifecycleAbstractReq, opts ...grpc.CallOption) (*None, error)
+}
+
+type gameMasterClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewGameMasterClient(cc grpc.ClientConnInterface) GameMasterClient {
+	return &gameMasterClient{cc}
+}
+
+func (c *gameMasterClient) Produce(ctx context.Context, in *RegionId, opts ...grpc.CallOption) (*None, error) {
+	out := new(None)
+	err := c.cc.Invoke(ctx, "/hege.reg.GameMaster/Produce", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gameMasterClient) Move(ctx context.Context, in *RegionId, opts ...grpc.CallOption) (*None, error) {
+	out := new(None)
+	err := c.cc.Invoke(ctx, "/hege.reg.GameMaster/Move", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gameMasterClient) GetStats(ctx context.Context, in *RegionId, opts ...grpc.CallOption) (GameMaster_GetStatsClient, error) {
+	stream, err := c.cc.NewStream(ctx, &GameMaster_ServiceDesc.Streams[0], "/hege.reg.GameMaster/GetStats", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &gameMasterGetStatsClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type GameMaster_GetStatsClient interface {
+	Recv() (*CityStatsRecord, error)
+	grpc.ClientStream
+}
+
+type gameMasterGetStatsClient struct {
+	grpc.ClientStream
+}
+
+func (x *gameMasterGetStatsClient) Recv() (*CityStatsRecord, error) {
+	m := new(CityStatsRecord)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *gameMasterClient) GetDetail(ctx context.Context, in *CityId, opts ...grpc.CallOption) (*CityView, error) {
+	out := new(CityView)
+	err := c.cc.Invoke(ctx, "/hege.reg.GameMaster/GetDetail", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gameMasterClient) LifecycleConfigure(ctx context.Context, in *LifecycleConfigureReq, opts ...grpc.CallOption) (*None, error) {
+	out := new(None)
+	err := c.cc.Invoke(ctx, "/hege.reg.GameMaster/LifecycleConfigure", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gameMasterClient) LifecycleAssign(ctx context.Context, in *LifecycleAssignReq, opts ...grpc.CallOption) (*None, error) {
+	out := new(None)
+	err := c.cc.Invoke(ctx, "/hege.reg.GameMaster/LifecycleAssign", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gameMasterClient) LifecycleResume(ctx context.Context, in *LifecycleAbstractReq, opts ...grpc.CallOption) (*None, error) {
+	out := new(None)
+	err := c.cc.Invoke(ctx, "/hege.reg.GameMaster/LifecycleResume", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gameMasterClient) LifecycleDismiss(ctx context.Context, in *LifecycleAbstractReq, opts ...grpc.CallOption) (*None, error) {
+	out := new(None)
+	err := c.cc.Invoke(ctx, "/hege.reg.GameMaster/LifecycleDismiss", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gameMasterClient) LifecycleSuspend(ctx context.Context, in *LifecycleAbstractReq, opts ...grpc.CallOption) (*None, error) {
+	out := new(None)
+	err := c.cc.Invoke(ctx, "/hege.reg.GameMaster/LifecycleSuspend", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gameMasterClient) LifecycleReset(ctx context.Context, in *LifecycleAbstractReq, opts ...grpc.CallOption) (*None, error) {
+	out := new(None)
+	err := c.cc.Invoke(ctx, "/hege.reg.GameMaster/LifecycleReset", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// GameMasterServer is the server API for GameMaster service.
+// All implementations must embed UnimplementedGameMasterServer
+// for forward compatibility
+type GameMasterServer interface {
+	// Have all the Cities on the Region to produce their resources
+	Produce(context.Context, *RegionId) (*None, error)
+	// Make all the armies on the Region to move on step
+	Move(context.Context, *RegionId) (*None, error)
+	// Compute core statistics for the whole region.
+	GetStats(*RegionId, GameMaster_GetStatsServer) error
+	GetDetail(context.Context, *CityId) (*CityView, error)
+	LifecycleConfigure(context.Context, *LifecycleConfigureReq) (*None, error)
+	LifecycleAssign(context.Context, *LifecycleAssignReq) (*None, error)
+	LifecycleResume(context.Context, *LifecycleAbstractReq) (*None, error)
+	LifecycleDismiss(context.Context, *LifecycleAbstractReq) (*None, error)
+	LifecycleSuspend(context.Context, *LifecycleAbstractReq) (*None, error)
+	LifecycleReset(context.Context, *LifecycleAbstractReq) (*None, error)
+	mustEmbedUnimplementedGameMasterServer()
+}
+
+// UnimplementedGameMasterServer must be embedded to have forward compatible implementations.
+type UnimplementedGameMasterServer struct {
+}
+
+func (UnimplementedGameMasterServer) Produce(context.Context, *RegionId) (*None, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Produce not implemented")
+}
+func (UnimplementedGameMasterServer) Move(context.Context, *RegionId) (*None, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Move not implemented")
+}
+func (UnimplementedGameMasterServer) GetStats(*RegionId, GameMaster_GetStatsServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetStats not implemented")
+}
+func (UnimplementedGameMasterServer) GetDetail(context.Context, *CityId) (*CityView, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDetail not implemented")
+}
+func (UnimplementedGameMasterServer) LifecycleConfigure(context.Context, *LifecycleConfigureReq) (*None, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LifecycleConfigure not implemented")
+}
+func (UnimplementedGameMasterServer) LifecycleAssign(context.Context, *LifecycleAssignReq) (*None, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LifecycleAssign not implemented")
+}
+func (UnimplementedGameMasterServer) LifecycleResume(context.Context, *LifecycleAbstractReq) (*None, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LifecycleResume not implemented")
+}
+func (UnimplementedGameMasterServer) LifecycleDismiss(context.Context, *LifecycleAbstractReq) (*None, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LifecycleDismiss not implemented")
+}
+func (UnimplementedGameMasterServer) LifecycleSuspend(context.Context, *LifecycleAbstractReq) (*None, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LifecycleSuspend not implemented")
+}
+func (UnimplementedGameMasterServer) LifecycleReset(context.Context, *LifecycleAbstractReq) (*None, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LifecycleReset not implemented")
+}
+func (UnimplementedGameMasterServer) mustEmbedUnimplementedGameMasterServer() {}
+
+// UnsafeGameMasterServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to GameMasterServer will
+// result in compilation errors.
+type UnsafeGameMasterServer interface {
+	mustEmbedUnimplementedGameMasterServer()
+}
+
+func RegisterGameMasterServer(s grpc.ServiceRegistrar, srv GameMasterServer) {
+	s.RegisterService(&GameMaster_ServiceDesc, srv)
+}
+
+func _GameMaster_Produce_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RegionId)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GameMasterServer).Produce(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/hege.reg.GameMaster/Produce",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GameMasterServer).Produce(ctx, req.(*RegionId))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GameMaster_Move_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RegionId)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GameMasterServer).Move(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/hege.reg.GameMaster/Move",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GameMasterServer).Move(ctx, req.(*RegionId))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GameMaster_GetStats_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(RegionId)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(GameMasterServer).GetStats(m, &gameMasterGetStatsServer{stream})
+}
+
+type GameMaster_GetStatsServer interface {
+	Send(*CityStatsRecord) error
+	grpc.ServerStream
+}
+
+type gameMasterGetStatsServer struct {
+	grpc.ServerStream
+}
+
+func (x *gameMasterGetStatsServer) Send(m *CityStatsRecord) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func _GameMaster_GetDetail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CityId)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GameMasterServer).GetDetail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/hege.reg.GameMaster/GetDetail",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GameMasterServer).GetDetail(ctx, req.(*CityId))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GameMaster_LifecycleConfigure_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LifecycleConfigureReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GameMasterServer).LifecycleConfigure(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/hege.reg.GameMaster/LifecycleConfigure",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GameMasterServer).LifecycleConfigure(ctx, req.(*LifecycleConfigureReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GameMaster_LifecycleAssign_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LifecycleAssignReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GameMasterServer).LifecycleAssign(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/hege.reg.GameMaster/LifecycleAssign",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GameMasterServer).LifecycleAssign(ctx, req.(*LifecycleAssignReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GameMaster_LifecycleResume_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LifecycleAbstractReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GameMasterServer).LifecycleResume(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/hege.reg.GameMaster/LifecycleResume",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GameMasterServer).LifecycleResume(ctx, req.(*LifecycleAbstractReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GameMaster_LifecycleDismiss_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LifecycleAbstractReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GameMasterServer).LifecycleDismiss(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/hege.reg.GameMaster/LifecycleDismiss",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GameMasterServer).LifecycleDismiss(ctx, req.(*LifecycleAbstractReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GameMaster_LifecycleSuspend_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LifecycleAbstractReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GameMasterServer).LifecycleSuspend(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/hege.reg.GameMaster/LifecycleSuspend",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GameMasterServer).LifecycleSuspend(ctx, req.(*LifecycleAbstractReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GameMaster_LifecycleReset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LifecycleAbstractReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GameMasterServer).LifecycleReset(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/hege.reg.GameMaster/LifecycleReset",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GameMasterServer).LifecycleReset(ctx, req.(*LifecycleAbstractReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// GameMaster_ServiceDesc is the grpc.ServiceDesc for GameMaster service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var GameMaster_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "hege.reg.GameMaster",
+	HandlerType: (*GameMasterServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Produce",
+			Handler:    _GameMaster_Produce_Handler,
+		},
+		{
+			MethodName: "Move",
+			Handler:    _GameMaster_Move_Handler,
+		},
+		{
+			MethodName: "GetDetail",
+			Handler:    _GameMaster_GetDetail_Handler,
+		},
+		{
+			MethodName: "LifecycleConfigure",
+			Handler:    _GameMaster_LifecycleConfigure_Handler,
+		},
+		{
+			MethodName: "LifecycleAssign",
+			Handler:    _GameMaster_LifecycleAssign_Handler,
+		},
+		{
+			MethodName: "LifecycleResume",
+			Handler:    _GameMaster_LifecycleResume_Handler,
+		},
+		{
+			MethodName: "LifecycleDismiss",
+			Handler:    _GameMaster_LifecycleDismiss_Handler,
+		},
+		{
+			MethodName: "LifecycleSuspend",
+			Handler:    _GameMaster_LifecycleSuspend_Handler,
+		},
+		{
+			MethodName: "LifecycleReset",
+			Handler:    _GameMaster_LifecycleReset_Handler,
+		},
+	},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "ListRegions",
-			Handler:       _Admin_ListRegions_Handler,
-			ServerStreams: true,
-		},
-		{
-			StreamName:    "GetScores",
-			Handler:       _Admin_GetScores_Handler,
-			ServerStreams: true,
-		},
-		{
 			StreamName:    "GetStats",
-			Handler:       _Admin_GetStats_Handler,
+			Handler:       _GameMaster_GetStats_Handler,
 			ServerStreams: true,
 		},
 	},
 	Metadata: "region.proto",
 }
 
-// CityClient is the client API for City service.
+// PublicClient is the client API for Public service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type CityClient interface {
-	// Paginated query of the cities owned by the given character.
-	// Only a summary of the cities are returned.
-	List(ctx context.Context, in *CitiesByCharReq, opts ...grpc.CallOption) (City_ListClient, error)
+type PublicClient interface {
+	ListRegions(ctx context.Context, in *RegionListReq, opts ...grpc.CallOption) (Public_ListRegionsClient, error)
 	// Paginated query of all the cities of the region.
 	// Only a summary of the cities are returned.
-	AllCities(ctx context.Context, in *PaginatedU64Query, opts ...grpc.CallOption) (City_AllCitiesClient, error)
-	// Returns a complete view of the City
-	// TODO(jfs): the request might fail because of a too large object
-	//            to be replied.
-	ShowAll(ctx context.Context, in *CityId, opts ...grpc.CallOption) (*CityView, error)
-	// Start the study of a knowledge whose type is specified by its unique ID.
-	// If the conditions are not met, an error is returned.
-	Study(ctx context.Context, in *StudyReq, opts ...grpc.CallOption) (*None, error)
-	// Start the construction of a building whose type is specified by its unique ID.
-	// If the conditions are not met, an error is returned.
-	Build(ctx context.Context, in *BuildReq, opts ...grpc.CallOption) (*None, error)
-	// Start the training of a Unit whose type is specified by its unique ID.
-	// If the conditions are not met, an error is returned.
-	Train(ctx context.Context, in *TrainReq, opts ...grpc.CallOption) (*None, error)
-	// Create an army around a set of units.
-	// The set of units must not be empty and all the units must stay in the given City.
-	CreateArmy(ctx context.Context, in *CreateArmyReq, opts ...grpc.CallOption) (*None, error)
-	// Create an army around a pile of resources, with a given destination.
-	// The army immediately preempts the stock in the reserve of the City
-	// and starts it movement. That army will have no aggressivity.
-	CreateTransport(ctx context.Context, in *CreateTransportReq, opts ...grpc.CallOption) (*None, error)
-	// Transfer a Unit from the given City to the given Army.
-	// The City must control the Army and the Unit must be in the City.
-	TransferUnit(ctx context.Context, in *TransferUnitReq, opts ...grpc.CallOption) (*None, error)
-	// Transfer a pile of Resources from the given City to the given Army.
-	// The City must control the Army and the Stock must hold the amount of Resources.
-	TransferResources(ctx context.Context, in *TransferResourcesReq, opts ...grpc.CallOption) (*None, error)
-	// Return the list of armies that can be controlled by the given City
-	ListArmies(ctx context.Context, in *CityId, opts ...grpc.CallOption) (City_ListArmiesClient, error)
+	AllCities(ctx context.Context, in *PaginatedU64Query, opts ...grpc.CallOption) (Public_AllCitiesClient, error)
 }
 
-type cityClient struct {
+type publicClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewCityClient(cc grpc.ClientConnInterface) CityClient {
-	return &cityClient{cc}
+func NewPublicClient(cc grpc.ClientConnInterface) PublicClient {
+	return &publicClient{cc}
 }
 
-func (c *cityClient) List(ctx context.Context, in *CitiesByCharReq, opts ...grpc.CallOption) (City_ListClient, error) {
-	stream, err := c.cc.NewStream(ctx, &City_ServiceDesc.Streams[0], "/hege.reg.City/List", opts...)
+func (c *publicClient) ListRegions(ctx context.Context, in *RegionListReq, opts ...grpc.CallOption) (Public_ListRegionsClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Public_ServiceDesc.Streams[0], "/hege.reg.Public/ListRegions", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &cityListClient{stream}
+	x := &publicListRegionsClient{stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -473,29 +619,29 @@ func (c *cityClient) List(ctx context.Context, in *CitiesByCharReq, opts ...grpc
 	return x, nil
 }
 
-type City_ListClient interface {
-	Recv() (*PublicCity, error)
+type Public_ListRegionsClient interface {
+	Recv() (*RegionSummary, error)
 	grpc.ClientStream
 }
 
-type cityListClient struct {
+type publicListRegionsClient struct {
 	grpc.ClientStream
 }
 
-func (x *cityListClient) Recv() (*PublicCity, error) {
-	m := new(PublicCity)
+func (x *publicListRegionsClient) Recv() (*RegionSummary, error) {
+	m := new(RegionSummary)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
 	return m, nil
 }
 
-func (c *cityClient) AllCities(ctx context.Context, in *PaginatedU64Query, opts ...grpc.CallOption) (City_AllCitiesClient, error) {
-	stream, err := c.cc.NewStream(ctx, &City_ServiceDesc.Streams[1], "/hege.reg.City/AllCities", opts...)
+func (c *publicClient) AllCities(ctx context.Context, in *PaginatedU64Query, opts ...grpc.CallOption) (Public_AllCitiesClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Public_ServiceDesc.Streams[1], "/hege.reg.Public/AllCities", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &cityAllCitiesClient{stream}
+	x := &publicAllCitiesClient{stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -505,479 +651,115 @@ func (c *cityClient) AllCities(ctx context.Context, in *PaginatedU64Query, opts 
 	return x, nil
 }
 
-type City_AllCitiesClient interface {
-	Recv() (*PublicCity, error)
+type Public_AllCitiesClient interface {
+	Recv() (*CityKey, error)
 	grpc.ClientStream
 }
 
-type cityAllCitiesClient struct {
+type publicAllCitiesClient struct {
 	grpc.ClientStream
 }
 
-func (x *cityAllCitiesClient) Recv() (*PublicCity, error) {
-	m := new(PublicCity)
+func (x *publicAllCitiesClient) Recv() (*CityKey, error) {
+	m := new(CityKey)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
 	return m, nil
 }
 
-func (c *cityClient) ShowAll(ctx context.Context, in *CityId, opts ...grpc.CallOption) (*CityView, error) {
-	out := new(CityView)
-	err := c.cc.Invoke(ctx, "/hege.reg.City/ShowAll", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *cityClient) Study(ctx context.Context, in *StudyReq, opts ...grpc.CallOption) (*None, error) {
-	out := new(None)
-	err := c.cc.Invoke(ctx, "/hege.reg.City/Study", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *cityClient) Build(ctx context.Context, in *BuildReq, opts ...grpc.CallOption) (*None, error) {
-	out := new(None)
-	err := c.cc.Invoke(ctx, "/hege.reg.City/Build", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *cityClient) Train(ctx context.Context, in *TrainReq, opts ...grpc.CallOption) (*None, error) {
-	out := new(None)
-	err := c.cc.Invoke(ctx, "/hege.reg.City/Train", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *cityClient) CreateArmy(ctx context.Context, in *CreateArmyReq, opts ...grpc.CallOption) (*None, error) {
-	out := new(None)
-	err := c.cc.Invoke(ctx, "/hege.reg.City/CreateArmy", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *cityClient) CreateTransport(ctx context.Context, in *CreateTransportReq, opts ...grpc.CallOption) (*None, error) {
-	out := new(None)
-	err := c.cc.Invoke(ctx, "/hege.reg.City/CreateTransport", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *cityClient) TransferUnit(ctx context.Context, in *TransferUnitReq, opts ...grpc.CallOption) (*None, error) {
-	out := new(None)
-	err := c.cc.Invoke(ctx, "/hege.reg.City/TransferUnit", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *cityClient) TransferResources(ctx context.Context, in *TransferResourcesReq, opts ...grpc.CallOption) (*None, error) {
-	out := new(None)
-	err := c.cc.Invoke(ctx, "/hege.reg.City/TransferResources", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *cityClient) ListArmies(ctx context.Context, in *CityId, opts ...grpc.CallOption) (City_ListArmiesClient, error) {
-	stream, err := c.cc.NewStream(ctx, &City_ServiceDesc.Streams[2], "/hege.reg.City/ListArmies", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &cityListArmiesClient{stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
-}
-
-type City_ListArmiesClient interface {
-	Recv() (*ArmyName, error)
-	grpc.ClientStream
-}
-
-type cityListArmiesClient struct {
-	grpc.ClientStream
-}
-
-func (x *cityListArmiesClient) Recv() (*ArmyName, error) {
-	m := new(ArmyName)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-// CityServer is the server API for City service.
-// All implementations must embed UnimplementedCityServer
+// PublicServer is the server API for Public service.
+// All implementations must embed UnimplementedPublicServer
 // for forward compatibility
-type CityServer interface {
-	// Paginated query of the cities owned by the given character.
-	// Only a summary of the cities are returned.
-	List(*CitiesByCharReq, City_ListServer) error
+type PublicServer interface {
+	ListRegions(*RegionListReq, Public_ListRegionsServer) error
 	// Paginated query of all the cities of the region.
 	// Only a summary of the cities are returned.
-	AllCities(*PaginatedU64Query, City_AllCitiesServer) error
-	// Returns a complete view of the City
-	// TODO(jfs): the request might fail because of a too large object
-	//            to be replied.
-	ShowAll(context.Context, *CityId) (*CityView, error)
-	// Start the study of a knowledge whose type is specified by its unique ID.
-	// If the conditions are not met, an error is returned.
-	Study(context.Context, *StudyReq) (*None, error)
-	// Start the construction of a building whose type is specified by its unique ID.
-	// If the conditions are not met, an error is returned.
-	Build(context.Context, *BuildReq) (*None, error)
-	// Start the training of a Unit whose type is specified by its unique ID.
-	// If the conditions are not met, an error is returned.
-	Train(context.Context, *TrainReq) (*None, error)
-	// Create an army around a set of units.
-	// The set of units must not be empty and all the units must stay in the given City.
-	CreateArmy(context.Context, *CreateArmyReq) (*None, error)
-	// Create an army around a pile of resources, with a given destination.
-	// The army immediately preempts the stock in the reserve of the City
-	// and starts it movement. That army will have no aggressivity.
-	CreateTransport(context.Context, *CreateTransportReq) (*None, error)
-	// Transfer a Unit from the given City to the given Army.
-	// The City must control the Army and the Unit must be in the City.
-	TransferUnit(context.Context, *TransferUnitReq) (*None, error)
-	// Transfer a pile of Resources from the given City to the given Army.
-	// The City must control the Army and the Stock must hold the amount of Resources.
-	TransferResources(context.Context, *TransferResourcesReq) (*None, error)
-	// Return the list of armies that can be controlled by the given City
-	ListArmies(*CityId, City_ListArmiesServer) error
-	mustEmbedUnimplementedCityServer()
+	AllCities(*PaginatedU64Query, Public_AllCitiesServer) error
+	mustEmbedUnimplementedPublicServer()
 }
 
-// UnimplementedCityServer must be embedded to have forward compatible implementations.
-type UnimplementedCityServer struct {
+// UnimplementedPublicServer must be embedded to have forward compatible implementations.
+type UnimplementedPublicServer struct {
 }
 
-func (UnimplementedCityServer) List(*CitiesByCharReq, City_ListServer) error {
-	return status.Errorf(codes.Unimplemented, "method List not implemented")
+func (UnimplementedPublicServer) ListRegions(*RegionListReq, Public_ListRegionsServer) error {
+	return status.Errorf(codes.Unimplemented, "method ListRegions not implemented")
 }
-func (UnimplementedCityServer) AllCities(*PaginatedU64Query, City_AllCitiesServer) error {
+func (UnimplementedPublicServer) AllCities(*PaginatedU64Query, Public_AllCitiesServer) error {
 	return status.Errorf(codes.Unimplemented, "method AllCities not implemented")
 }
-func (UnimplementedCityServer) ShowAll(context.Context, *CityId) (*CityView, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ShowAll not implemented")
-}
-func (UnimplementedCityServer) Study(context.Context, *StudyReq) (*None, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Study not implemented")
-}
-func (UnimplementedCityServer) Build(context.Context, *BuildReq) (*None, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Build not implemented")
-}
-func (UnimplementedCityServer) Train(context.Context, *TrainReq) (*None, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Train not implemented")
-}
-func (UnimplementedCityServer) CreateArmy(context.Context, *CreateArmyReq) (*None, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateArmy not implemented")
-}
-func (UnimplementedCityServer) CreateTransport(context.Context, *CreateTransportReq) (*None, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateTransport not implemented")
-}
-func (UnimplementedCityServer) TransferUnit(context.Context, *TransferUnitReq) (*None, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method TransferUnit not implemented")
-}
-func (UnimplementedCityServer) TransferResources(context.Context, *TransferResourcesReq) (*None, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method TransferResources not implemented")
-}
-func (UnimplementedCityServer) ListArmies(*CityId, City_ListArmiesServer) error {
-	return status.Errorf(codes.Unimplemented, "method ListArmies not implemented")
-}
-func (UnimplementedCityServer) mustEmbedUnimplementedCityServer() {}
+func (UnimplementedPublicServer) mustEmbedUnimplementedPublicServer() {}
 
-// UnsafeCityServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to CityServer will
+// UnsafePublicServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to PublicServer will
 // result in compilation errors.
-type UnsafeCityServer interface {
-	mustEmbedUnimplementedCityServer()
+type UnsafePublicServer interface {
+	mustEmbedUnimplementedPublicServer()
 }
 
-func RegisterCityServer(s grpc.ServiceRegistrar, srv CityServer) {
-	s.RegisterService(&City_ServiceDesc, srv)
+func RegisterPublicServer(s grpc.ServiceRegistrar, srv PublicServer) {
+	s.RegisterService(&Public_ServiceDesc, srv)
 }
 
-func _City_List_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(CitiesByCharReq)
+func _Public_ListRegions_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(RegionListReq)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(CityServer).List(m, &cityListServer{stream})
+	return srv.(PublicServer).ListRegions(m, &publicListRegionsServer{stream})
 }
 
-type City_ListServer interface {
-	Send(*PublicCity) error
+type Public_ListRegionsServer interface {
+	Send(*RegionSummary) error
 	grpc.ServerStream
 }
 
-type cityListServer struct {
+type publicListRegionsServer struct {
 	grpc.ServerStream
 }
 
-func (x *cityListServer) Send(m *PublicCity) error {
+func (x *publicListRegionsServer) Send(m *RegionSummary) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func _City_AllCities_Handler(srv interface{}, stream grpc.ServerStream) error {
+func _Public_AllCities_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(PaginatedU64Query)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(CityServer).AllCities(m, &cityAllCitiesServer{stream})
+	return srv.(PublicServer).AllCities(m, &publicAllCitiesServer{stream})
 }
 
-type City_AllCitiesServer interface {
-	Send(*PublicCity) error
+type Public_AllCitiesServer interface {
+	Send(*CityKey) error
 	grpc.ServerStream
 }
 
-type cityAllCitiesServer struct {
+type publicAllCitiesServer struct {
 	grpc.ServerStream
 }
 
-func (x *cityAllCitiesServer) Send(m *PublicCity) error {
+func (x *publicAllCitiesServer) Send(m *CityKey) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func _City_ShowAll_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CityId)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(CityServer).ShowAll(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/hege.reg.City/ShowAll",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CityServer).ShowAll(ctx, req.(*CityId))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _City_Study_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(StudyReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(CityServer).Study(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/hege.reg.City/Study",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CityServer).Study(ctx, req.(*StudyReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _City_Build_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(BuildReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(CityServer).Build(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/hege.reg.City/Build",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CityServer).Build(ctx, req.(*BuildReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _City_Train_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(TrainReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(CityServer).Train(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/hege.reg.City/Train",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CityServer).Train(ctx, req.(*TrainReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _City_CreateArmy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateArmyReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(CityServer).CreateArmy(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/hege.reg.City/CreateArmy",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CityServer).CreateArmy(ctx, req.(*CreateArmyReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _City_CreateTransport_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateTransportReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(CityServer).CreateTransport(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/hege.reg.City/CreateTransport",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CityServer).CreateTransport(ctx, req.(*CreateTransportReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _City_TransferUnit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(TransferUnitReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(CityServer).TransferUnit(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/hege.reg.City/TransferUnit",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CityServer).TransferUnit(ctx, req.(*TransferUnitReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _City_TransferResources_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(TransferResourcesReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(CityServer).TransferResources(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/hege.reg.City/TransferResources",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CityServer).TransferResources(ctx, req.(*TransferResourcesReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _City_ListArmies_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(CityId)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
-	}
-	return srv.(CityServer).ListArmies(m, &cityListArmiesServer{stream})
-}
-
-type City_ListArmiesServer interface {
-	Send(*ArmyName) error
-	grpc.ServerStream
-}
-
-type cityListArmiesServer struct {
-	grpc.ServerStream
-}
-
-func (x *cityListArmiesServer) Send(m *ArmyName) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-// City_ServiceDesc is the grpc.ServiceDesc for City service.
+// Public_ServiceDesc is the grpc.ServiceDesc for Public service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var City_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "hege.reg.City",
-	HandlerType: (*CityServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "ShowAll",
-			Handler:    _City_ShowAll_Handler,
-		},
-		{
-			MethodName: "Study",
-			Handler:    _City_Study_Handler,
-		},
-		{
-			MethodName: "Build",
-			Handler:    _City_Build_Handler,
-		},
-		{
-			MethodName: "Train",
-			Handler:    _City_Train_Handler,
-		},
-		{
-			MethodName: "CreateArmy",
-			Handler:    _City_CreateArmy_Handler,
-		},
-		{
-			MethodName: "CreateTransport",
-			Handler:    _City_CreateTransport_Handler,
-		},
-		{
-			MethodName: "TransferUnit",
-			Handler:    _City_TransferUnit_Handler,
-		},
-		{
-			MethodName: "TransferResources",
-			Handler:    _City_TransferResources_Handler,
-		},
-	},
+var Public_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "hege.reg.Public",
+	HandlerType: (*PublicServer)(nil),
+	Methods:     []grpc.MethodDesc{},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "List",
-			Handler:       _City_List_Handler,
+			StreamName:    "ListRegions",
+			Handler:       _Public_ListRegions_Handler,
 			ServerStreams: true,
 		},
 		{
 			StreamName:    "AllCities",
-			Handler:       _City_AllCities_Handler,
-			ServerStreams: true,
-		},
-		{
-			StreamName:    "ListArmies",
-			Handler:       _City_ListArmies_Handler,
+			Handler:       _Public_AllCities_Handler,
 			ServerStreams: true,
 		},
 	},
@@ -1445,6 +1227,707 @@ var Definitions_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "ListKnowledges",
 			Handler:       _Definitions_ListKnowledges_Handler,
+			ServerStreams: true,
+		},
+	},
+	Metadata: "region.proto",
+}
+
+// PlayerClient is the client API for Player service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type PlayerClient interface {
+	LifecycleConfigure(ctx context.Context, in *LifecycleConfigureReq, opts ...grpc.CallOption) (*None, error)
+	LifecycleAcquire(ctx context.Context, in *CityId, opts ...grpc.CallOption) (*None, error)
+	LifecycleLeave(ctx context.Context, in *CityId, opts ...grpc.CallOption) (*None, error)
+	LifecycleAuto(ctx context.Context, in *CityId, opts ...grpc.CallOption) (*None, error)
+}
+
+type playerClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewPlayerClient(cc grpc.ClientConnInterface) PlayerClient {
+	return &playerClient{cc}
+}
+
+func (c *playerClient) LifecycleConfigure(ctx context.Context, in *LifecycleConfigureReq, opts ...grpc.CallOption) (*None, error) {
+	out := new(None)
+	err := c.cc.Invoke(ctx, "/hege.reg.Player/LifecycleConfigure", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *playerClient) LifecycleAcquire(ctx context.Context, in *CityId, opts ...grpc.CallOption) (*None, error) {
+	out := new(None)
+	err := c.cc.Invoke(ctx, "/hege.reg.Player/LifecycleAcquire", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *playerClient) LifecycleLeave(ctx context.Context, in *CityId, opts ...grpc.CallOption) (*None, error) {
+	out := new(None)
+	err := c.cc.Invoke(ctx, "/hege.reg.Player/LifecycleLeave", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *playerClient) LifecycleAuto(ctx context.Context, in *CityId, opts ...grpc.CallOption) (*None, error) {
+	out := new(None)
+	err := c.cc.Invoke(ctx, "/hege.reg.Player/LifecycleAuto", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// PlayerServer is the server API for Player service.
+// All implementations must embed UnimplementedPlayerServer
+// for forward compatibility
+type PlayerServer interface {
+	LifecycleConfigure(context.Context, *LifecycleConfigureReq) (*None, error)
+	LifecycleAcquire(context.Context, *CityId) (*None, error)
+	LifecycleLeave(context.Context, *CityId) (*None, error)
+	LifecycleAuto(context.Context, *CityId) (*None, error)
+	mustEmbedUnimplementedPlayerServer()
+}
+
+// UnimplementedPlayerServer must be embedded to have forward compatible implementations.
+type UnimplementedPlayerServer struct {
+}
+
+func (UnimplementedPlayerServer) LifecycleConfigure(context.Context, *LifecycleConfigureReq) (*None, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LifecycleConfigure not implemented")
+}
+func (UnimplementedPlayerServer) LifecycleAcquire(context.Context, *CityId) (*None, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LifecycleAcquire not implemented")
+}
+func (UnimplementedPlayerServer) LifecycleLeave(context.Context, *CityId) (*None, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LifecycleLeave not implemented")
+}
+func (UnimplementedPlayerServer) LifecycleAuto(context.Context, *CityId) (*None, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LifecycleAuto not implemented")
+}
+func (UnimplementedPlayerServer) mustEmbedUnimplementedPlayerServer() {}
+
+// UnsafePlayerServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to PlayerServer will
+// result in compilation errors.
+type UnsafePlayerServer interface {
+	mustEmbedUnimplementedPlayerServer()
+}
+
+func RegisterPlayerServer(s grpc.ServiceRegistrar, srv PlayerServer) {
+	s.RegisterService(&Player_ServiceDesc, srv)
+}
+
+func _Player_LifecycleConfigure_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LifecycleConfigureReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PlayerServer).LifecycleConfigure(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/hege.reg.Player/LifecycleConfigure",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PlayerServer).LifecycleConfigure(ctx, req.(*LifecycleConfigureReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Player_LifecycleAcquire_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CityId)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PlayerServer).LifecycleAcquire(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/hege.reg.Player/LifecycleAcquire",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PlayerServer).LifecycleAcquire(ctx, req.(*CityId))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Player_LifecycleLeave_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CityId)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PlayerServer).LifecycleLeave(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/hege.reg.Player/LifecycleLeave",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PlayerServer).LifecycleLeave(ctx, req.(*CityId))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Player_LifecycleAuto_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CityId)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PlayerServer).LifecycleAuto(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/hege.reg.Player/LifecycleAuto",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PlayerServer).LifecycleAuto(ctx, req.(*CityId))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// Player_ServiceDesc is the grpc.ServiceDesc for Player service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var Player_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "hege.reg.Player",
+	HandlerType: (*PlayerServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "LifecycleConfigure",
+			Handler:    _Player_LifecycleConfigure_Handler,
+		},
+		{
+			MethodName: "LifecycleAcquire",
+			Handler:    _Player_LifecycleAcquire_Handler,
+		},
+		{
+			MethodName: "LifecycleLeave",
+			Handler:    _Player_LifecycleLeave_Handler,
+		},
+		{
+			MethodName: "LifecycleAuto",
+			Handler:    _Player_LifecycleAuto_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "region.proto",
+}
+
+// CityClient is the client API for City service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type CityClient interface {
+	// Paginated query of the cities owned by the given user.
+	// Only a summary of the cities are returned.
+	List(ctx context.Context, in *CitiesByOwnerReq, opts ...grpc.CallOption) (City_ListClient, error)
+	// Returns a complete view of the City
+	// TODO(jfs): the request might fail because of a too large object
+	//            to be replied.
+	ShowAll(ctx context.Context, in *CityId, opts ...grpc.CallOption) (*CityView, error)
+	// Start the study of a knowledge whose type is specified by its unique ID.
+	// If the conditions are not met, an error is returned.
+	Study(ctx context.Context, in *StudyReq, opts ...grpc.CallOption) (*None, error)
+	// Start the construction of a building whose type is specified by its unique ID.
+	// If the conditions are not met, an error is returned.
+	Build(ctx context.Context, in *BuildReq, opts ...grpc.CallOption) (*None, error)
+	// Start the training of a Unit whose type is specified by its unique ID.
+	// If the conditions are not met, an error is returned.
+	Train(ctx context.Context, in *TrainReq, opts ...grpc.CallOption) (*None, error)
+	// Create an army around a set of units.
+	// The set of units must not be empty and all the units must stay in the given City.
+	CreateArmy(ctx context.Context, in *CreateArmyReq, opts ...grpc.CallOption) (*None, error)
+	// Create an army around a pile of resources, with a given destination.
+	// The army immediately preempts the stock in the reserve of the City
+	// and starts it movement. That army will have no aggressivity.
+	CreateTransport(ctx context.Context, in *CreateTransportReq, opts ...grpc.CallOption) (*None, error)
+	// Transfer a Unit from the given City to the given Army.
+	// The City must control the Army and the Unit must be in the City.
+	TransferUnit(ctx context.Context, in *TransferUnitReq, opts ...grpc.CallOption) (*None, error)
+	// Transfer a pile of Resources from the given City to the given Army.
+	// The City must control the Army and the Stock must hold the amount of Resources.
+	TransferResources(ctx context.Context, in *TransferResourcesReq, opts ...grpc.CallOption) (*None, error)
+	// Return the list of armies that can be controlled by the given City
+	ListArmies(ctx context.Context, in *CityId, opts ...grpc.CallOption) (City_ListArmiesClient, error)
+}
+
+type cityClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewCityClient(cc grpc.ClientConnInterface) CityClient {
+	return &cityClient{cc}
+}
+
+func (c *cityClient) List(ctx context.Context, in *CitiesByOwnerReq, opts ...grpc.CallOption) (City_ListClient, error) {
+	stream, err := c.cc.NewStream(ctx, &City_ServiceDesc.Streams[0], "/hege.reg.City/List", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &cityListClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type City_ListClient interface {
+	Recv() (*CityKey, error)
+	grpc.ClientStream
+}
+
+type cityListClient struct {
+	grpc.ClientStream
+}
+
+func (x *cityListClient) Recv() (*CityKey, error) {
+	m := new(CityKey)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *cityClient) ShowAll(ctx context.Context, in *CityId, opts ...grpc.CallOption) (*CityView, error) {
+	out := new(CityView)
+	err := c.cc.Invoke(ctx, "/hege.reg.City/ShowAll", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *cityClient) Study(ctx context.Context, in *StudyReq, opts ...grpc.CallOption) (*None, error) {
+	out := new(None)
+	err := c.cc.Invoke(ctx, "/hege.reg.City/Study", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *cityClient) Build(ctx context.Context, in *BuildReq, opts ...grpc.CallOption) (*None, error) {
+	out := new(None)
+	err := c.cc.Invoke(ctx, "/hege.reg.City/Build", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *cityClient) Train(ctx context.Context, in *TrainReq, opts ...grpc.CallOption) (*None, error) {
+	out := new(None)
+	err := c.cc.Invoke(ctx, "/hege.reg.City/Train", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *cityClient) CreateArmy(ctx context.Context, in *CreateArmyReq, opts ...grpc.CallOption) (*None, error) {
+	out := new(None)
+	err := c.cc.Invoke(ctx, "/hege.reg.City/CreateArmy", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *cityClient) CreateTransport(ctx context.Context, in *CreateTransportReq, opts ...grpc.CallOption) (*None, error) {
+	out := new(None)
+	err := c.cc.Invoke(ctx, "/hege.reg.City/CreateTransport", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *cityClient) TransferUnit(ctx context.Context, in *TransferUnitReq, opts ...grpc.CallOption) (*None, error) {
+	out := new(None)
+	err := c.cc.Invoke(ctx, "/hege.reg.City/TransferUnit", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *cityClient) TransferResources(ctx context.Context, in *TransferResourcesReq, opts ...grpc.CallOption) (*None, error) {
+	out := new(None)
+	err := c.cc.Invoke(ctx, "/hege.reg.City/TransferResources", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *cityClient) ListArmies(ctx context.Context, in *CityId, opts ...grpc.CallOption) (City_ListArmiesClient, error) {
+	stream, err := c.cc.NewStream(ctx, &City_ServiceDesc.Streams[1], "/hege.reg.City/ListArmies", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &cityListArmiesClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type City_ListArmiesClient interface {
+	Recv() (*ArmyName, error)
+	grpc.ClientStream
+}
+
+type cityListArmiesClient struct {
+	grpc.ClientStream
+}
+
+func (x *cityListArmiesClient) Recv() (*ArmyName, error) {
+	m := new(ArmyName)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+// CityServer is the server API for City service.
+// All implementations must embed UnimplementedCityServer
+// for forward compatibility
+type CityServer interface {
+	// Paginated query of the cities owned by the given user.
+	// Only a summary of the cities are returned.
+	List(*CitiesByOwnerReq, City_ListServer) error
+	// Returns a complete view of the City
+	// TODO(jfs): the request might fail because of a too large object
+	//            to be replied.
+	ShowAll(context.Context, *CityId) (*CityView, error)
+	// Start the study of a knowledge whose type is specified by its unique ID.
+	// If the conditions are not met, an error is returned.
+	Study(context.Context, *StudyReq) (*None, error)
+	// Start the construction of a building whose type is specified by its unique ID.
+	// If the conditions are not met, an error is returned.
+	Build(context.Context, *BuildReq) (*None, error)
+	// Start the training of a Unit whose type is specified by its unique ID.
+	// If the conditions are not met, an error is returned.
+	Train(context.Context, *TrainReq) (*None, error)
+	// Create an army around a set of units.
+	// The set of units must not be empty and all the units must stay in the given City.
+	CreateArmy(context.Context, *CreateArmyReq) (*None, error)
+	// Create an army around a pile of resources, with a given destination.
+	// The army immediately preempts the stock in the reserve of the City
+	// and starts it movement. That army will have no aggressivity.
+	CreateTransport(context.Context, *CreateTransportReq) (*None, error)
+	// Transfer a Unit from the given City to the given Army.
+	// The City must control the Army and the Unit must be in the City.
+	TransferUnit(context.Context, *TransferUnitReq) (*None, error)
+	// Transfer a pile of Resources from the given City to the given Army.
+	// The City must control the Army and the Stock must hold the amount of Resources.
+	TransferResources(context.Context, *TransferResourcesReq) (*None, error)
+	// Return the list of armies that can be controlled by the given City
+	ListArmies(*CityId, City_ListArmiesServer) error
+	mustEmbedUnimplementedCityServer()
+}
+
+// UnimplementedCityServer must be embedded to have forward compatible implementations.
+type UnimplementedCityServer struct {
+}
+
+func (UnimplementedCityServer) List(*CitiesByOwnerReq, City_ListServer) error {
+	return status.Errorf(codes.Unimplemented, "method List not implemented")
+}
+func (UnimplementedCityServer) ShowAll(context.Context, *CityId) (*CityView, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ShowAll not implemented")
+}
+func (UnimplementedCityServer) Study(context.Context, *StudyReq) (*None, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Study not implemented")
+}
+func (UnimplementedCityServer) Build(context.Context, *BuildReq) (*None, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Build not implemented")
+}
+func (UnimplementedCityServer) Train(context.Context, *TrainReq) (*None, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Train not implemented")
+}
+func (UnimplementedCityServer) CreateArmy(context.Context, *CreateArmyReq) (*None, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateArmy not implemented")
+}
+func (UnimplementedCityServer) CreateTransport(context.Context, *CreateTransportReq) (*None, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateTransport not implemented")
+}
+func (UnimplementedCityServer) TransferUnit(context.Context, *TransferUnitReq) (*None, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TransferUnit not implemented")
+}
+func (UnimplementedCityServer) TransferResources(context.Context, *TransferResourcesReq) (*None, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TransferResources not implemented")
+}
+func (UnimplementedCityServer) ListArmies(*CityId, City_ListArmiesServer) error {
+	return status.Errorf(codes.Unimplemented, "method ListArmies not implemented")
+}
+func (UnimplementedCityServer) mustEmbedUnimplementedCityServer() {}
+
+// UnsafeCityServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to CityServer will
+// result in compilation errors.
+type UnsafeCityServer interface {
+	mustEmbedUnimplementedCityServer()
+}
+
+func RegisterCityServer(s grpc.ServiceRegistrar, srv CityServer) {
+	s.RegisterService(&City_ServiceDesc, srv)
+}
+
+func _City_List_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(CitiesByOwnerReq)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(CityServer).List(m, &cityListServer{stream})
+}
+
+type City_ListServer interface {
+	Send(*CityKey) error
+	grpc.ServerStream
+}
+
+type cityListServer struct {
+	grpc.ServerStream
+}
+
+func (x *cityListServer) Send(m *CityKey) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func _City_ShowAll_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CityId)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CityServer).ShowAll(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/hege.reg.City/ShowAll",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CityServer).ShowAll(ctx, req.(*CityId))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _City_Study_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StudyReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CityServer).Study(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/hege.reg.City/Study",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CityServer).Study(ctx, req.(*StudyReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _City_Build_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BuildReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CityServer).Build(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/hege.reg.City/Build",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CityServer).Build(ctx, req.(*BuildReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _City_Train_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TrainReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CityServer).Train(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/hege.reg.City/Train",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CityServer).Train(ctx, req.(*TrainReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _City_CreateArmy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateArmyReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CityServer).CreateArmy(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/hege.reg.City/CreateArmy",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CityServer).CreateArmy(ctx, req.(*CreateArmyReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _City_CreateTransport_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateTransportReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CityServer).CreateTransport(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/hege.reg.City/CreateTransport",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CityServer).CreateTransport(ctx, req.(*CreateTransportReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _City_TransferUnit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TransferUnitReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CityServer).TransferUnit(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/hege.reg.City/TransferUnit",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CityServer).TransferUnit(ctx, req.(*TransferUnitReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _City_TransferResources_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TransferResourcesReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CityServer).TransferResources(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/hege.reg.City/TransferResources",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CityServer).TransferResources(ctx, req.(*TransferResourcesReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _City_ListArmies_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(CityId)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(CityServer).ListArmies(m, &cityListArmiesServer{stream})
+}
+
+type City_ListArmiesServer interface {
+	Send(*ArmyName) error
+	grpc.ServerStream
+}
+
+type cityListArmiesServer struct {
+	grpc.ServerStream
+}
+
+func (x *cityListArmiesServer) Send(m *ArmyName) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+// City_ServiceDesc is the grpc.ServiceDesc for City service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var City_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "hege.reg.City",
+	HandlerType: (*CityServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ShowAll",
+			Handler:    _City_ShowAll_Handler,
+		},
+		{
+			MethodName: "Study",
+			Handler:    _City_Study_Handler,
+		},
+		{
+			MethodName: "Build",
+			Handler:    _City_Build_Handler,
+		},
+		{
+			MethodName: "Train",
+			Handler:    _City_Train_Handler,
+		},
+		{
+			MethodName: "CreateArmy",
+			Handler:    _City_CreateArmy_Handler,
+		},
+		{
+			MethodName: "CreateTransport",
+			Handler:    _City_CreateTransport_Handler,
+		},
+		{
+			MethodName: "TransferUnit",
+			Handler:    _City_TransferUnit_Handler,
+		},
+		{
+			MethodName: "TransferResources",
+			Handler:    _City_TransferResources_Handler,
+		},
+	},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "List",
+			Handler:       _City_List_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "ListArmies",
+			Handler:       _City_ListArmies_Handler,
 			ServerStreams: true,
 		},
 	},

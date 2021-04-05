@@ -9,37 +9,79 @@ option go_package = ".;proto";
 
 package hege.reg;
 
-
+// Restricted to administrators
 service Admin {
-  //
-  rpc CreateRegion(RegionCreateReq) returns (None) {}
+  // Instantiate a region on the target server
+  rpc CreateRegion(RegionCreateReq) returns (Created) {}
 
-  rpc ListRegions(RegionListReq) returns (stream RegionSummary) {}
+  // PushStats extracts the usage in-game stats of each city in the given
+  // region and pushes them to the collector.
+  rpc PushStats(RegionId) returns (None) {}
+}
 
+// Restricted to game masters
+service GameMaster {
   // Have all the Cities on the Region to produce their resources
   rpc Produce(RegionId) returns (None) {}
 
   // Make all the armies on the Region to move on step
   rpc Move(RegionId) returns (None) {}
 
-  // Compute the scoreboard of the region.
-  rpc GetScores(RegionId) returns (stream PublicCity) {}
+  // Compute core statistics for the whole region.
+  rpc GetStats(RegionId) returns (stream CityStatsRecord) {}
 
-  // PushStats extracts the usage in-game stats of each city in the given
-  // region and pushes them to the collector.
-  rpc PushStats(RegionId) returns (None) {}
+  rpc GetDetail(CityId) returns (CityView) {}
 
-  rpc GetStats(RegionId) returns (stream CityStats) {}
+  rpc LifecycleConfigure(LifecycleConfigureReq) returns (None) {}
+  rpc LifecycleAssign(LifecycleAssignReq) returns (None) {}
+  rpc LifecycleResume(LifecycleAbstractReq) returns (None) {}
+  rpc LifecycleDismiss(LifecycleAbstractReq) returns (None) {}
+  rpc LifecycleSuspend(LifecycleAbstractReq) returns (None) {}
+  rpc LifecycleReset(LifecycleAbstractReq) returns (None) {}
 }
 
-service City {
-  // Paginated query of the cities owned by the given character.
-  // Only a summary of the cities are returned.
-  rpc List (CitiesByCharReq) returns (stream PublicCity) {}
+// Read-Only, Publicly available
+service Public {
+  rpc ListRegions(RegionListReq) returns (stream RegionSummary) {}
 
   // Paginated query of all the cities of the region.
   // Only a summary of the cities are returned.
-  rpc AllCities (PaginatedU64Query) returns (stream PublicCity) {}
+  rpc AllCities (PaginatedU64Query) returns (stream CityKey) {}
+}
+
+// Restricted to a Game Master
+service Templates {
+  rpc ListTemplates (PaginatedStrQuery) returns (stream CityTemplate) {}
+  rpc CreateTemplate (CityTemplateReq) returns (Created) {}
+  rpc UpdateTemplate (CityTemplateReq) returns (None) {}
+  rpc DeleteTemplate (TemplateId) returns (None) {}
+}
+
+// Read-Only, Publicly available
+service Definitions {
+  // Return (a page of) a list of all the Units that are possible in the world
+  rpc ListUnits (PaginatedU64Query) returns (stream UnitTypeView) {}
+
+  // Return (a page of) a list of all the Buildings that are possible in the world
+  rpc ListBuildings (PaginatedU64Query) returns (stream BuildingTypeView) {}
+
+  // Return (a page of) a list of all the Knowledge that are possible in the world
+  rpc ListKnowledges (PaginatedU64Query) returns (stream KnowledgeTypeView) {}
+}
+
+// Restricted to registered users
+service Player {
+  rpc LifecycleConfigure(LifecycleConfigureReq) returns (None) {}
+  rpc LifecycleAcquire(CityId) returns (None) {}
+  rpc LifecycleLeave(CityId) returns (None) {}
+  rpc LifecycleAuto(CityId) returns (None) {}
+}
+
+// Restricted to registered users
+service City {
+  // Paginated query of the cities owned by the given user.
+  // Only a summary of the cities are returned.
+  rpc List (CitiesByOwnerReq) returns (stream CityKey) {}
 
   // Returns a complete view of the City
   // TODO(jfs): the request might fail because of a too large object
@@ -79,24 +121,7 @@ service City {
   rpc ListArmies (CityId) returns (stream ArmyName) {}
 }
 
-service Templates {
-  rpc ListTemplates (PaginatedStrQuery) returns (stream CityTemplate) {}
-  rpc CreateTemplate (CityTemplateReq) returns (Created) {}
-  rpc UpdateTemplate (CityTemplateReq) returns (None) {}
-  rpc DeleteTemplate (TemplateId) returns (None) {}
-}
-
-service Definitions {
-  // Return (a page of) a list of all the Units that are possible in the world
-  rpc ListUnits (PaginatedU64Query) returns (stream UnitTypeView) {}
-
-  // Return (a page of) a list of all the Buildings that are possible in the world
-  rpc ListBuildings (PaginatedU64Query) returns (stream BuildingTypeView) {}
-
-  // Return (a page of) a list of all the Knowledge that are possible in the world
-  rpc ListKnowledges (PaginatedU64Query) returns (stream KnowledgeTypeView) {}
-}
-
+// Restricted to registered users
 service Army {
   // Return a detailed view of the given Army
   rpc Show (ArmyId) returns (ArmyView) {}
@@ -128,25 +153,20 @@ service Army {
 }
 
 
+
 message RegionSummary {
   string name = 1;
   string mapName = 2;
   uint32 countCities = 3;
   uint32 countFights = 4;
-}
-
-message RegionListReq {
-  string nameMarker = 1;
+  // TODO(jfs): Add per-state gauges
 }
 
 message RegionId {
   string region = 1;
 }
 
-message RegionCreateReq {
-  string name = 1;
-  string mapName = 2;
-}
+
 
 message ArmyName {
   string id = 1;
@@ -156,9 +176,8 @@ message ArmyName {
 // Identifies an army managed by the city
 message ArmyId {
   string region = 1;
-  string character = 2;
-  uint64 city = 3;
-  string army = 4;
+  uint64 city = 2;
+  string army = 3;
 }
 
 message ArmyView {
@@ -168,6 +187,336 @@ message ArmyView {
   ResourcesAbs stock = 4;
   repeated UnitView units = 5;
   repeated ArmyCommand commands = 6;
+}
+
+
+
+message TemplateId {
+  string region = 1;
+  string id = 2;
+}
+
+
+
+message ResourcesAbs {
+  uint64 r0 = 1;
+  uint64 r1 = 2;
+  uint64 r2 = 3;
+  uint64 r3 = 4;
+  uint64 r4 = 5;
+  uint64 r5 = 6;
+}
+
+message ResourcesPlus {
+  int64 r0 = 1;
+  int64 r1 = 2;
+  int64 r2 = 3;
+  int64 r3 = 4;
+  int64 r4 = 5;
+  int64 r5 = 6;
+}
+
+message ResourcesMult {
+  double r0 = 1;
+  double r1 = 2;
+  double r2 = 3;
+  double r3 = 4;
+  double r4 = 5;
+  double r5 = 6;
+}
+
+message ResourcesMod {
+  ResourcesPlus plus = 1;
+  ResourcesMult mult = 2;
+}
+
+message StockView {
+  ResourcesAbs base = 1;
+  ResourcesMod knowledge = 2;
+  ResourcesMod buildings = 3;
+  ResourcesMod troops = 4;
+  ResourcesAbs actual = 5;
+
+  ResourcesAbs usage = 6;
+}
+
+message ProductionView {
+  ResourcesAbs base = 1;
+  ResourcesMod knowledge = 2;
+  ResourcesMod buildings = 3;
+  ResourcesMod troops = 4;
+  ResourcesAbs actual = 5;
+}
+
+
+
+message UnitTypeView {
+  uint64 id = 1;
+  string name = 2;
+  uint32 ticks = 3;
+  uint32 health = 4;
+}
+
+message UnitView {
+  // Lazily populated
+  UnitTypeView type = 1;
+
+  string id = 2;
+  uint64 idType = 3;
+  uint32 ticks = 4;
+  uint32 health = 5;
+}
+
+
+
+message BuildingTypeRef {
+  uint64 id = 1;
+  string name = 2;
+  uint32 ticks = 3;
+}
+
+message BuildingTypePublic {
+  ResourcesAbs cost0 = 1;
+  ResourcesAbs cost = 2;
+  ResourcesMod stock = 3;
+  ResourcesMod prod = 4;
+  bool multiple = 5;
+}
+
+message BuildingTypePrivate {
+  int64 popBuild = 1;
+  int64 popFall = 2;
+  int64 popDestroy = 3;
+  int64 popDismantle = 4;
+  repeated uint64 requires = 5;
+  repeated uint64 conflicts = 6;
+}
+
+message BuildingTypeView {
+  BuildingTypeRef ref = 1;
+  BuildingTypePublic public = 2;
+  BuildingTypePrivate private = 3;
+}
+
+message BuildingView {
+  BuildingTypeRef type = 1;
+  string id = 2;
+  uint64 idType = 3;
+  uint32 ticks = 4;
+}
+
+
+
+message KnowledgeTypeView {
+  uint64 id = 1;
+  string name = 2;
+  uint32 ticks = 3;
+}
+
+message KnowledgeView {
+  KnowledgeTypeView type = 1;
+  string id = 2;
+  uint64 idType = 3;
+  uint32 ticks = 4;
+}
+
+
+
+// Fully identifies a City.
+message CityId {
+  string region = 1;
+  uint64 city = 2;
+}
+
+message CityKey {
+  string region = 1;
+  uint64 city = 2;
+  string name = 3;
+}
+
+message CityConstants {
+  int32 alignment = 1;
+  int32 chaos = 2;
+  uint32 politics = 3;
+  uint32 cult = 4;
+  uint32 ethny = 5;
+}
+
+message CityVars {
+  int64 permPop = 2;
+  int64 permHealth = 3;
+  int64 permIntelligence = 4;
+  uint32 tickMassacres = 5;
+}
+
+message CityPolitics {
+  uint64 overlord = 1;
+  repeated uint64 lieges = 2;
+}
+
+message CityStats {
+  // Gauges
+  ResourcesAbs stockCapacity = 1;
+  ResourcesAbs stockUsage = 2;
+  uint64 scoreBuilding = 3;
+  uint64 scoreKnowledge = 4;
+  uint64 scoreArmy = 5;
+  int64 popularity = 6;
+  // Counters
+  ResourcesAbs resourceProduced = 8;
+  ResourcesAbs resourceSent = 9;
+  ResourcesAbs resourceReceived = 10;
+  ResourcesAbs taxSent = 11;
+  ResourcesAbs taxReceived = 12;
+  uint64 moves = 13;
+  uint64 unitRaised = 14;
+  uint64 unitLost = 15;
+  uint64 fightJoined = 16;
+  uint64 fightLeft = 17;
+  uint64 fightWon = 18;
+  uint64 fightLost = 19;
+}
+
+message CityEvolution {
+  repeated KnowledgeTypeView kFrontier = 1;
+  repeated BuildingTypeRef bFrontier = 2;
+  repeated UnitTypeView uFrontier = 3;
+}
+
+message CityAssets {
+  repeated UnitView units = 1;
+  repeated BuildingView buildings = 2;
+  repeated KnowledgeView knowledges = 3;
+  repeated ArmyView armies = 4;
+}
+
+message CityTemplate {
+  string region = 1;
+  string name = 2;
+  CityConstants constants = 3;
+  ResourcesAbs stock = 4;
+  ResourcesAbs stockCapacity = 5;
+  ResourcesAbs production = 6;
+  repeated uint64 buildingTypes = 7;
+  repeated uint64 skillTypes = 8;
+  repeated uint64 unitTypes = 9;
+}
+
+message CityView {
+  CityKey key = 1;
+
+  string owner = 2;
+  uint32 state = 3;
+
+  CityPolitics politics = 7;
+
+  CityConstants constants = 4;
+
+  CityVars variables = 6;
+
+  // The resources owned by the City
+  StockView stock = 8;
+
+  ProductionView production = 9;
+
+  // All the things owned by the current city
+  CityAssets assets = 10;
+
+  // All the things that the current may start to own
+  CityEvolution evol = 11;
+}
+
+
+
+message Artifact {
+  string id = 1;
+  string idType = 2;
+  string name = 3;
+}
+
+
+
+message CityStatsRecord {
+  CityKey city = 1;
+  CityStats stats = 2;
+}
+
+message LifecycleAbstractReq {
+  CityId city = 1;
+}
+
+message LifecycleAssignReq {
+  CityId city = 1;
+  string user = 2;
+}
+
+message StudyReq {
+  CityId city = 1;
+  uint64 knowledgeType = 2;
+}
+
+message TrainReq {
+  CityId city = 1;
+  uint64 unitType = 2;
+}
+
+message BuildReq {
+  CityId city = 1;
+  uint64 buildingType = 2;
+}
+
+message CreateTransportReq {
+  CityId city = 1;
+  string name = 2;
+  uint64 target = 3;
+  ResourcesAbs stock = 4;
+}
+
+message CreateArmyReq {
+  CityId city = 1;
+  string name = 2;
+  repeated string unit = 3;
+}
+
+message TransferUnitReq {
+  CityId city = 1;
+  string army = 3;
+  repeated string unit = 4;
+}
+
+message TransferResourcesReq {
+  CityId city = 1;
+  string army = 3;
+  ResourcesAbs stock = 4;
+}
+
+message CitiesByOwnerReq {
+  string region = 1;
+  string user = 2;
+  uint64 marker = 3;
+}
+
+message RegionListReq {
+  string nameMarker = 1;
+}
+
+message RegionCreateReq {
+  string name = 1;
+  string mapName = 2;
+}
+
+message LifecycleConfigureReq {
+  string region = 1;
+  uint64 city = 2;
+  string model = 3;
+}
+
+message CityTemplateReq {
+  string region = 1;
+  // Optional
+  string id = 2;
+  // Optional
+  CityTemplate tpl = 3;
 }
 
 enum ArmyCommandType {
@@ -236,278 +585,12 @@ message ArmyCommand {
   ArmyAssaultArgs attack = 4;
 }
 
-// Identifies a City and Character who is
-message CityId {
-  string region = 1;
-  string character = 2;
-  uint64 city = 3;
-}
 
-message TemplateId {
-  string region = 1;
-  string id = 2;
-}
 
-message ResourcesAbs {
-  uint64 r0 = 1;
-  uint64 r1 = 2;
-  uint64 r2 = 3;
-  uint64 r3 = 4;
-  uint64 r4 = 5;
-  uint64 r5 = 6;
-}
+message None {}
 
-message ResourcesPlus {
-  int64 r0 = 1;
-  int64 r1 = 2;
-  int64 r2 = 3;
-  int64 r3 = 4;
-  int64 r4 = 5;
-  int64 r5 = 6;
-}
-
-message ResourcesMult {
-  double r0 = 1;
-  double r1 = 2;
-  double r2 = 3;
-  double r3 = 4;
-  double r4 = 5;
-  double r5 = 6;
-}
-
-message ResourcesMod {
-  ResourcesPlus plus = 1;
-  ResourcesMult mult = 2;
-}
-
-message UnitTypeView {
-  uint64 id = 1;
-  string name = 2;
-  uint32 ticks = 3;
-  uint32 health = 4;
-}
-
-message BuildingTypeRef {
-  uint64 id = 1;
-  string name = 2;
-  uint32 ticks = 3;
-}
-
-message BuildingTypePublic {
-  ResourcesAbs cost0 = 1;
-  ResourcesAbs cost = 2;
-  ResourcesMod stock = 3;
-  ResourcesMod prod = 4;
-  bool multiple = 5;
-}
-
-message BuildingTypePrivate {
-  int64 popBuild = 1;
-  int64 popFall = 2;
-  int64 popDestroy = 3;
-  int64 popDismantle = 4;
-  repeated uint64 requires = 5;
-  repeated uint64 conflicts = 6;
-}
-
-message BuildingTypeView {
-  BuildingTypeRef ref = 1;
-  BuildingTypePublic public = 2;
-  BuildingTypePrivate private = 3;
-}
-
-message KnowledgeTypeView {
-  uint64 id = 1;
-  string name = 2;
-  uint32 ticks = 3;
-}
-
-message UnitView {
-  // Lazily populated
-  UnitTypeView type = 1;
-  string id = 2;
-  uint64 idType = 3;
-  uint32 ticks = 4;
-  uint32 health = 5;
-  string name = 6;
-}
-
-message BuildingView {
-  BuildingTypeRef type = 1;
-  string id = 2;
-  uint64 idType = 3;
-  uint32 ticks = 4;
-  string name = 5;
-}
-
-message KnowledgeView {
-  KnowledgeTypeView type = 1;
-  string id = 2;
-  uint64 idType = 3;
-  uint32 ticks = 4;
-  string name = 5;
-}
-
-message StockView {
-  ResourcesAbs base = 1;
-  ResourcesMod knowledge = 2;
-  ResourcesMod buildings = 3;
-  ResourcesMod troops = 4;
-  ResourcesAbs actual = 5;
-
-  ResourcesAbs usage = 6;
-}
-
-message ProductionView {
-  ResourcesAbs base = 1;
-  ResourcesMod knowledge = 2;
-  ResourcesMod buildings = 3;
-  ResourcesMod troops = 4;
-  ResourcesAbs actual = 5;
-}
-
-message CityEvolution {
-  repeated KnowledgeTypeView kFrontier = 1;
-  repeated BuildingTypeRef bFrontier = 2;
-  repeated UnitTypeView uFrontier = 3;
-}
-
-message CityAssets {
-  repeated UnitView units = 1;
-  repeated BuildingView buildings = 2;
-  repeated KnowledgeView knowledges = 3;
-  repeated ArmyView armies = 4;
-}
-
-message CityPolitics {
-  uint64 overlord = 1;
-  repeated uint64 lieges = 2;
-}
-
-message CityStats {
-  // Identifier
-  uint64 id = 1;
-  string name = 2;
-  // Gauges
-  ResourcesAbs stockCapacity = 3;
-  ResourcesAbs stockUsage = 4;
-  uint64 scoreBuilding = 5;
-  uint64 scoreKnowledge = 6;
-  uint64 scoreArmy = 7;
-  // Counters
-  ResourcesAbs resourceProduced = 8;
-  ResourcesAbs resourceSent = 9;
-  ResourcesAbs resourceReceived = 10;
-  ResourcesAbs taxSent = 11;
-  ResourcesAbs taxReceived = 12;
-  uint64 moves = 13;
-  uint64 unitRaised = 14;
-  uint64 unitLost = 15;
-  uint64 fightJoined = 16;
-  uint64 fightLeft = 17;
-  uint64 fightWon = 18;
-  uint64 fightLost = 19;
-}
-
-message PublicCity {
-  uint64 id = 1;
-  string name = 2;
-  int32 alignment = 4;
-  int32 chaos = 5;
-  uint32 politics = 6;
-  uint32 cult = 7;
-  uint32 ethny = 8;
-  int64 score = 9;
-}
-
-message CityTemplate {
-  // The :id: field will be ignored
-  PublicCity public = 1;
-  ResourcesAbs stock = 2;
-  ResourcesAbs stockCapacity = 3;
-  ResourcesAbs production = 4;
-  repeated uint64 buildingTypes = 5;
-  repeated uint64 skillTypes = 6;
-  repeated uint64 unitTypes = 7;
-}
-
-message CityTemplateReq {
-  string region = 1;
-  // Optional
-  string id = 2;
-  CityTemplate tpl = 3;
-}
-
-message CityView {
-  PublicCity public = 1;
-  string owner = 2;
-
-  uint32 tickMassacres = 3;
-  bool auto = 4;
-
-  CityPolitics politics = 5;
-
-  // The resources owned by the City
-  StockView stock = 6;
-  ProductionView production = 7;
-
-  // All the things owned by the current city
-  CityAssets assets = 8;
-
-  // All the things that the current may start to own
-  CityEvolution evol = 9;
-}
-
-message StudyReq {
-  CityId city = 1;
-  uint64 knowledgeType = 2;
-}
-
-message TrainReq {
-  CityId city = 1;
-  uint64 unitType = 2;
-}
-
-message BuildReq {
-  CityId city = 1;
-  uint64 buildingType = 2;
-}
-
-message CreateTransportReq {
-  CityId city = 1;
-  string name = 2;
-  uint64 target = 3;
-  ResourcesAbs stock = 4;
-}
-
-message CreateArmyReq {
-  CityId city = 1;
-  string name = 2;
-  repeated string unit = 3;
-}
-
-message TransferUnitReq {
-  CityId city = 1;
-  string army = 3;
-  repeated string unit = 4;
-}
-
-message TransferResourcesReq {
-  CityId city = 1;
-  string army = 3;
-  ResourcesAbs stock = 4;
-}
-
-message CitiesByCharReq {
-  string region = 1;
-  string character = 2;
-  uint64 marker = 3;
-}
-
-message Artifact {
+message Created {
   string id = 1;
-  string idType = 2;
-  string name = 3;
 }
 
 message PaginatedU64Query {
@@ -518,10 +601,4 @@ message PaginatedU64Query {
 message PaginatedStrQuery {
   string region = 1;
   string marker = 2;
-}
-
-message None {}
-
-message Created {
-  string id = 1;
 }

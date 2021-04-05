@@ -10,28 +10,6 @@ import (
 	proto "github.com/hegemonie-rpg/engine/pkg/region/proto"
 )
 
-func showEvolution(w *region.World, c *region.City) *proto.CityEvolution {
-	cv := &proto.CityEvolution{}
-
-	for _, kt := range c.KnowledgeFrontier(w) {
-		cv.KFrontier = append(cv.KFrontier, &proto.KnowledgeTypeView{
-			Id: kt.ID, Name: kt.Name,
-		})
-	}
-	for _, bt := range c.BuildingFrontier(w) {
-		cv.BFrontier = append(cv.BFrontier, &proto.BuildingTypeRef{
-			Id: bt.ID, Name: bt.Name,
-		})
-	}
-	for _, ut := range c.UnitFrontier(w) {
-		cv.UFrontier = append(cv.UFrontier, &proto.UnitTypeView{
-			Id: ut.ID, Name: ut.Name,
-		})
-	}
-
-	return cv
-}
-
 // M2P -> Model to Proto
 func resMultM2P(r region.ResourcesMultiplier) *proto.ResourcesMult {
 	rm := proto.ResourcesMult{}
@@ -90,9 +68,9 @@ func resModM2P(r region.ResourceModifiers) *proto.ResourcesMod {
 	return &rm
 }
 
-func showProduction(w *region.World, c *region.City) *proto.ProductionView {
+func showProduction(r *region.Region, c *region.City) *proto.ProductionView {
 	v := &proto.ProductionView{}
-	prod := c.GetProduction(w)
+	prod := c.ComputeProduction(r)
 	v.Base = resAbsM2P(prod.Base)
 	v.Buildings = resModM2P(prod.Buildings)
 	v.Knowledge = resModM2P(prod.Knowledge)
@@ -100,9 +78,9 @@ func showProduction(w *region.World, c *region.City) *proto.ProductionView {
 	return v
 }
 
-func showStock(w *region.World, c *region.City) *proto.StockView {
+func showStock(r *region.Region, c *region.City) *proto.StockView {
 	v := &proto.StockView{}
-	stock := c.GetStock(w)
+	stock := c.ComputeStock(r)
 	v.Base = resAbsM2P(stock.Base)
 	v.Buildings = resModM2P(stock.Buildings)
 	v.Knowledge = resModM2P(stock.Knowledge)
@@ -111,7 +89,27 @@ func showStock(w *region.World, c *region.City) *proto.StockView {
 	return v
 }
 
-func showAssets(w *region.World, c *region.City) *proto.CityAssets {
+func showEvolution(r *region.Region, c *region.City) *proto.CityEvolution {
+	cv := &proto.CityEvolution{}
+	for _, kt := range c.KnowledgeFrontier(r) {
+		cv.KFrontier = append(cv.KFrontier, &proto.KnowledgeTypeView{
+			Id: kt.ID, Name: kt.Name,
+		})
+	}
+	for _, bt := range c.BuildingFrontier(r) {
+		cv.BFrontier = append(cv.BFrontier, &proto.BuildingTypeRef{
+			Id: bt.ID, Name: bt.Name,
+		})
+	}
+	for _, ut := range c.UnitFrontier(r) {
+		cv.UFrontier = append(cv.UFrontier, &proto.UnitTypeView{
+			Id: ut.ID, Name: ut.Name,
+		})
+	}
+	return cv
+}
+
+func showAssets(r *region.Region, c *region.City) *proto.CityAssets {
 	v := &proto.CityAssets{}
 
 	for _, k := range c.Knowledges {
@@ -140,23 +138,21 @@ func showAssets(w *region.World, c *region.City) *proto.CityAssets {
 	return v
 }
 
-func showCity(w *region.World, c *region.City) *proto.CityView {
+func showCityConstants(r *region.Region, c *region.City) *proto.CityConstants {
+	return &proto.CityConstants{
+		Cult:      c.Cult,
+		Chaos:     c.Chaotic,
+		Alignment: c.Alignment,
+		Ethny:     c.EthnicGroup,
+		Politics:  c.PoliticalGroup,
+	}
+}
+
+func showCity(r *region.Region, c *region.City) *proto.CityView {
 	cv := &proto.CityView{
-		Public: &proto.PublicCity{
-			Id:   c.ID,
-			Name: c.Name,
-
-			Cult:      c.Cult,
-			Chaos:     c.Chaotic,
-			Alignment: c.Alignment,
-			Ethny:     c.EthnicGroup,
-			Politics:  c.PoliticalGroup,
-		},
-
-		Owner: c.Owner,
-
-		TickMassacres: c.TicksMassacres,
-
+		Key:       showCityKey(r, c),
+		Constants: showCityConstants(r, c),
+		Variables: showCityVars(r, c),
 		Politics: &proto.CityPolitics{
 			Overlord: c.Overlord,
 			Lieges:   []uint64{},
@@ -167,10 +163,10 @@ func showCity(w *region.World, c *region.City) *proto.CityView {
 		cv.Politics.Lieges = append(cv.Politics.Lieges, c.ID)
 	}
 
-	cv.Evol = showEvolution(w, c)
-	cv.Production = showProduction(w, c)
-	cv.Stock = showStock(w, c)
-	cv.Assets = showAssets(w, c)
+	cv.Evol = showEvolution(r, c)
+	cv.Production = showProduction(r, c)
+	cv.Stock = showStock(r, c)
+	cv.Assets = showAssets(r, c)
 	return cv
 }
 
@@ -193,7 +189,7 @@ func showArmyCommand(c *region.Command) *proto.ArmyCommand {
 	return &cmd
 }
 
-func showArmy(w *region.World, a *region.Army) *proto.ArmyView {
+func showArmy(r *region.Region, a *region.Army) *proto.ArmyView {
 	view := &proto.ArmyView{
 		Id:       a.ID,
 		Name:     a.Name,
@@ -201,7 +197,7 @@ func showArmy(w *region.World, a *region.Army) *proto.ArmyView {
 		Stock:    resAbsM2P(a.Stock),
 	}
 	for _, u := range a.Units {
-		view.Units = append(view.Units, showUnit(w, u))
+		view.Units = append(view.Units, showUnit(r, u))
 	}
 	for _, c := range a.Targets {
 		view.Commands = append(view.Commands, showArmyCommand(&c))
@@ -209,39 +205,48 @@ func showArmy(w *region.World, a *region.Army) *proto.ArmyView {
 	return view
 }
 
-func showUnit(w *region.World, u *region.Unit) *proto.UnitView {
+func showUnit(r *region.Region, u *region.Unit) *proto.UnitView {
 	return &proto.UnitView{
 		Id:     u.ID,
 		IdType: u.Type,
-		Name:   "",
 		Ticks:  u.Ticks,
 		Health: u.Health,
 	}
 }
 
-func showCityPublic(w *region.World, c *region.City, scored bool) *proto.PublicCity {
-	var score int64
-	if scored {
-		score = c.GetActualPopularity(w)
+func showCityKey(r *region.Region, c *region.City) *proto.CityKey {
+	return &proto.CityKey{
+		City:   c.ID,
+		Name:   c.Name,
+		Region: r.Name,
 	}
-	return &proto.PublicCity{
-		Id:        c.ID,
-		Name:      c.Name,
-		Score:     score,
-		Alignment: c.Alignment,
-		Chaos:     c.Chaotic,
-		Cult:      c.Cult,
-		Politics:  c.PoliticalGroup,
-		Ethny:     c.EthnicGroup,
+}
+
+func showCityPublic(r *region.Region, c *region.City) *proto.CityView {
+	return &proto.CityView{
+		Key:   showCityKey(r, c),
+		Constants: &proto.CityConstants{
+			Alignment: c.Alignment,
+			Chaos:     c.Chaotic,
+			Cult:      c.Cult,
+			Politics:  c.PoliticalGroup,
+			Ethny:     c.EthnicGroup,
+		},
+	}
+}
+
+func showCityVars(r *region.Region, c *region.City) *proto.CityVars {
+	return &proto.CityVars{
+		TickMassacres:    c.TicksMassacres,
+		PermIntelligence: c.PermanentIntelligence,
+		PermHealth:       c.PermanentHealth,
+		PermPop:          c.PermanentPopularity,
 	}
 }
 
 func showCityStats(r *region.Region, c *region.City) *proto.CityStats {
-	stats := c.GetStats(r)
+	stats := c.ComputeStats(r)
 	return &proto.CityStats{
-		// Identifiers
-		Id:   c.ID,
-		Name: c.Name,
 		// Gauges
 		StockUsage:     resAbsM2P(stats.StockUsage),
 		StockCapacity:  resAbsM2P(stats.StockCapacity),
@@ -266,7 +271,7 @@ func showCityStats(r *region.Region, c *region.City) *proto.CityStats {
 
 func showCityTemplate(r *region.Region, c *region.City) *proto.CityTemplate {
 	rc := &proto.CityTemplate{}
-	rc.Public = showCityPublic(r.GetWorld(), c, false)
+	rc.Constants = showCityConstants(r, c)
 	rc.Stock = resAbsM2P(c.Stock)
 	rc.StockCapacity = resAbsM2P(c.StockCapacity)
 	rc.Production = resAbsM2P(c.Production)
@@ -283,4 +288,11 @@ func showCityTemplate(r *region.Region, c *region.City) *proto.CityTemplate {
 		rc.UnitTypes = append(rc.UnitTypes, x.Type)
 	}
 	return rc
+}
+
+func showCityStatsRecord(r *region.Region, c *region.City) *proto.CityStatsRecord {
+	return &proto.CityStatsRecord{
+		City:  showCityKey(r, c),
+		Stats: showCityStats(r, c),
+	}
 }

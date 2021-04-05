@@ -14,12 +14,12 @@ import (
 type armyApp struct {
 	proto.UnimplementedArmyServer
 
-	app *regionApp
+	app *regionBackend
 }
 
 func (app *armyApp) Show(ctx context.Context, req *proto.ArmyId) (reply *proto.ArmyView, err error) {
-	err = app.app.armyLock('r', req, func(_ *region.Region, _ *region.City, army *region.Army) error {
-		reply = showArmy(app.app.w, army)
+	err = app.app.armyLock('r', req, func(r *region.Region, _ *region.City, army *region.Army) error {
+		reply = showArmy(r, army)
 		return nil
 	})
 	return reply, err

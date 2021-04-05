@@ -13,7 +13,7 @@ import (
 type defsApp struct {
 	proto.UnimplementedDefinitionsServer
 
-	app *regionApp
+	app *regionBackend
 }
 
 func (app *defsApp) ListUnits(req *proto.PaginatedU64Query, stream proto.Definitions_ListUnitsServer) error {

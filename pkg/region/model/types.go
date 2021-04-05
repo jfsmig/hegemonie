@@ -44,14 +44,21 @@ const (
 )
 
 const (
-	CityStateIdle = iota
-	CityStateAssigned
-	CityStateConfigured
-	CityStateMgmtConfigured
-	CityStateReady
-	CityStateActive
-	CityStateAuto
-	CityStateSuspended
+	CityStatePrivIdle = iota
+	CityStatePrivAssigned
+	CityStatePrivConfigured
+	CityStatePrivReady
+	CityStatePrivHeadless
+	CityStatePrivSuspended
+	CityStatePrivAuto
+	CityStatePrivActive
+
+	CityStatePubIdle
+	CityStatePubAssigned
+	CityStatePubHeadless
+	CityStatePubSuspended
+	CityStatePubAuto
+	CityStatePubActive
 )
 
 type World struct {
@@ -195,119 +202,20 @@ type CityActivityCounters struct {
 // gauges are mostly computed.
 type CityStats struct {
 	// Gauges
-	StockCapacity  Resources
-	StockUsage     Resources
+	StockCapacity Resources
+	StockUsage    Resources
+
+	// A measure of the City's evolution, only the building aspects
 	ScoreBuildings uint64
+	// A measure of the City's evolution, only the skills aspects
 	ScoreKnowledge uint64
-	ScoreMilitary  uint64
+	// A measure of the City's evolution, only the military aspects
+	ScoreMilitary uint64
+
+	Popularity int64
+
 	// Counters
 	Activity CityActivityCounters
-}
-
-type KnowledgeType struct {
-	ID    uint64 `json:"Id"`
-	Name  string `json:"Name"`
-	Ticks uint32 `json:",omitempty"`
-
-	// Transient bonus of Popularity, when the Knowledge is present
-	PopBonus int64
-
-	// Permanent bonus of Popularity when the Knowledge is achieved
-	PopBonusLearn int64
-
-	// Permanent bonus of Popularity (to the owner) when the Knowledge is stolen
-	PopBonusStealVictim int64
-
-	// Permanent bonus of Popularity (to the robber) when the Knowledge is stolen
-	PopBonusStealActor int64
-
-	// Impat of the current Building on the total storage capacity of the City.
-	Stock ResourceModifiers
-
-	// Increment of resources produced by this building.
-	Prod ResourceModifiers
-
-	// Amount of resources spent when the City starts learning this knowledge
-	Cost0 Resources
-
-	// Amount of resources spent to advance of one tick
-	Cost Resources
-
-	// All the knowledges that are required to start the current Knowledge
-	// (this is an AND, not an OR)
-	Requires []uint64
-
-	// All the knowledge that are forbidden by the current knowledge
-	Conflicts []uint64
-}
-
-type Knowledge struct {
-	ID    string `json:"Id"`
-	Type  uint64
-	Ticks uint32 `json:",omitempty"`
-}
-
-type BuildingType struct {
-	// Unique ID of the BuildingType
-	ID uint64 `json:"Id"`
-
-	// Display name of the current BuildingType
-	Name string
-
-	// How many ticks for the construction
-	Ticks uint32 `json:",omitempty"`
-
-	// How much does the production cost to start the the building process.
-	Cost0 Resources
-
-	// How much does the production cost at each tick.
-	Cost Resources
-
-	// Has the building to be unique a the City
-	MultipleAllowed bool `json:",omitempty"`
-
-	// Amount of total popularity required to start the construction of the building
-	PopRequired int64
-
-	// Transient bonus of Popularity, when the Building is alive
-	PopBonus int64
-
-	// Permanent bonus of Popularity given when the Building is achieved
-	PopBonusBuild int64
-
-	// Permanent bonus of Popularity given to the owner of the Building when it is destroyed.
-	PopBonusFall int64
-
-	// Permanent bonus of Popularity given to the destroyer of the Building
-	PopBonusDestroy int64
-
-	// Permanent bonus of Popularity given to the owner of the Building when it is dismantled.
-	PopBonusDismantle int64
-
-	// Impat of the current Building on the total storage capacity of the City.
-	Stock ResourceModifiers
-
-	// Increment of resources produced by this building.
-	Prod ResourceModifiers
-
-	// A set of KnowledgeType ID that must all be present in a City to let that City start
-	// this kind of building.
-	Requires []uint64
-
-	// A set of KnowledgeType ID that must all be absent in a City to let that City start
-	// this kind of building.
-	Conflicts []uint64
-}
-
-type Building struct {
-	// The unique ID of the current Building
-	ID string `json:"Id"`
-
-	// The unique ID of the BuildingType associated to the current Building
-	Type uint64
-
-	// How many construction rounds remain before the building's achievement
-	Ticks uint32 `json:",omitempty"`
 }
 
 // City is the central point of a game instance.
@@ -404,6 +312,112 @@ type City struct {
 	// PRIVATE
 	// Pointer to cities we currently are the overlord of
 	lieges SetOfCities
+}
+
+type KnowledgeType struct {
+	ID    uint64 `json:"Id"`
+	Name  string `json:"Name"`
+	Ticks uint32 `json:",omitempty"`
+
+	// Transient bonus of Popularity, when the Knowledge is present
+	PopBonus int64
+
+	// Permanent bonus of Popularity when the Knowledge is achieved
+	PopBonusLearn int64
+
+	// Permanent bonus of Popularity (to the owner) when the Knowledge is stolen
+	PopBonusStealVictim int64
+
+	// Permanent bonus of Popularity (to the robber) when the Knowledge is stolen
+	PopBonusStealActor int64
+
+	// Impact of the current Building on the total storage capacity of the City.
+	Stock ResourceModifiers
+
+	// Increment of resources produced by this building.
+	Prod ResourceModifiers
+
+	// Amount of resources spent when the City starts learning this knowledge
+	Cost0 Resources
+
+	// Amount of resources spent to advance of one tick
+	Cost Resources
+
+	// All the knowledges that are required to start the current Knowledge
+	// (this is an AND, not an OR)
+	Requires []uint64
+
+	// All the knowledge that are forbidden by the current knowledge
+	Conflicts []uint64
+}
+
+type Knowledge struct {
+	ID    string `json:"Id"`
+	Type  uint64
+	Ticks uint32 `json:",omitempty"`
+}
+
+type BuildingType struct {
+	// Unique ID of the BuildingType
+	ID uint64 `json:"Id"`
+
+	// Display name of the current BuildingType
+	Name string
+
+	// How many ticks for the construction
+	Ticks uint32 `json:",omitempty"`
+
+	// How much does the production cost to start the the building process.
+	Cost0 Resources
+
+	// How much does the production cost at each tick.
+	Cost Resources
+
+	// Has the building to be unique a the City
+	MultipleAllowed bool `json:",omitempty"`
+
+	// Amount of total popularity required to start the construction of the building
+	PopRequired int64
+
+	// Transient bonus of Popularity, when the Building is alive
+	PopBonus int64
+
+	// Permanent bonus of Popularity given when the Building is achieved
+	PopBonusBuild int64
+
+	// Permanent bonus of Popularity given to the owner of the Building when it is destroyed.
+	PopBonusFall int64
+
+	// Permanent bonus of Popularity given to the destroyer of the Building
+	PopBonusDestroy int64
+
+	// Permanent bonus of Popularity given to the owner of the Building when it is dismantled.
+	PopBonusDismantle int64
+
+	// Impat of the current Building on the total storage capacity of the City.
+	Stock ResourceModifiers
+
+	// Increment of resources produced by this building.
+	Prod ResourceModifiers
+
+	// A set of KnowledgeType ID that must all be present in a City to let that City start
+	// this kind of building.
+	Requires []uint64
+
+	// A set of KnowledgeType ID that must all be absent in a City to let that City start
+	// this kind of building.
+	Conflicts []uint64
+}
+
+type Building struct {
+	// The unique ID of the current Building
+	ID string `json:"Id"`
+
+	// The unique ID of the BuildingType associated to the current Building
+	Type uint64
+
+	// How many construction rounds remain before the building's achievement
+	Ticks uint32 `json:",omitempty"`
 }
 
 // UnitType gathers the core statistics of a kind of Unit. It actually dictates the

@@ -93,7 +93,12 @@ func clients() *cobra.Command {
 
 	cmd.AddCommand(
 		clientMap(ctx), clientEvent(ctx), clientAuth(ctx),
-		clientRegion(ctx), clientCity(ctx), clientTemplates(ctx))
+		clientGM(ctx),
+		clientAdmin(ctx),
+		clientPublic(ctx),
+		clientCity(ctx),
+		clientTemplates(ctx),
+		clientDefinitions(ctx))
 	return cmd
 }
 
@@ -336,79 +341,16 @@ func clientAuth(ctx context.Context) *cobra.Command {
 	return cmd
 }
 
-func clientRegion(ctx context.Context) *cobra.Command {
+func clientDefinitions(ctx context.Context) *cobra.Command {
 	var cfg regclient.ClientCLI
 
 	cmd := &cobra.Command{
-		Use:     "regions",
-		Aliases: []string{"reg", "region"},
-		Short:   "Client of a Regions API service",
-		Example: "hege client regions (create|list) ...",
+		Use:     "defs",
+		Aliases: []string{"def", "definitions"},
+		Short:   "Client of a Region Definitions API service",
+		Example: "hege client defs (units|buildings|skills) $REGION_ID",
 		Args:    cobra.MinimumNArgs(1),
 		RunE:    nonLeaf,
-	}
-
-	createRegion := &cobra.Command{
-		Use:     "create",
-		Aliases: []string{"new"},
-		Short:   "Create a new region",
-		Example: "hege client regions create $REGION_ID $MAP_ID",
-		Args:    cobra.ExactArgs(2),
-		RunE:    func(cmd *cobra.Command, args []string) error { return cfg.DoCreateRegion(ctx, args[0], args[1]) },
-	}
-
-	listRegions := &cobra.Command{
-		Use:     "list",
-		Aliases: []string{"ls", "all"},
-		Short:   "List the existing regions",
-		Example: "hege client regions list [$REGION_ID_MARKER]",
-		Args:    cobra.MaximumNArgs(1),
-		RunE:    func(cmd *cobra.Command, args []string) error { return cfg.DoListRegions(ctx, first(args)) },
-	}
-
-	roundMovement := &cobra.Command{
-		Use:     "move",
-		Aliases: []string{"movement", "mov"},
-		Short:   "Execute a movement round on the region",
-		Example: "hege client regions move $REGION_ID",
-		Args:    cobra.ExactArgs(1),
-		RunE:    func(cmd *cobra.Command, args []string) error { return cfg.DoRegionMovement(ctx, args[0]) },
-	}
-
-	roundProduction := &cobra.Command{
-		Use:     "produce",
-		Aliases: []string{"production", "prod"},
-		Short:   "Execute a movement round on the region",
-		Example: "hege client regions move $REGION_ID",
-		Args:    cobra.ExactArgs(1),
-		RunE:    func(cmd *cobra.Command, args []string) error { return cfg.DoRegionProduction(ctx, args[0]) },
-	}
-
-	pushStats := &cobra.Command{
-		Use:     "stats_refresh",
-		Aliases: []string{"refresh", "stx"},
-		Short:   "Trigger a stats refresh by the region service, for the given region",
-		Example: "hege client regions refresh $REGION_ID",
-		Args:    cobra.ExactArgs(1),
-		RunE:    func(cmd *cobra.Command, args []string) error { return cfg.DoRegionPushStats(ctx, args[0]) },
-	}
-
-	getStats := &cobra.Command{
-		Use:     "stats",
-		Aliases: []string{"stat", "st"},
-		Short:   "Get the stats board of the region",
-		Example: "hege client regions stats $REGION_ID",
-		Args:    cobra.ExactArgs(1),
-		RunE:    func(cmd *cobra.Command, args []string) error { return cfg.DoRegionGetStats(ctx, args[0]) },
-	}
-
-	getScore := &cobra.Command{
-		Use:     "score",
-		Aliases: []string{"scores"},
-		Short:   "Get the score board of the region",
-		Example: "hege client regions score $REGION_ID",
-		Args:    cobra.ExactArgs(1),
-		RunE:    func(cmd *cobra.Command, args []string) error { return cfg.DoRegionGetScores(ctx, args[0]) },
 	}
 
 	buildings := &cobra.Command{
@@ -438,12 +380,198 @@ func clientRegion(ctx context.Context) *cobra.Command {
 		RunE:    func(cmd *cobra.Command, args []string) error { return cfg.DoRegionGetUnits(ctx, args[0]) },
 	}
 
-	cmd.AddCommand(
-		createRegion, listRegions,
-		roundMovement, roundProduction,
-		pushStats, getStats,
-		getScore,
-		buildings, skills, units)
+	cmd.AddCommand(buildings, skills, units)
+	return cmd
+}
+
+func clientGM(ctx context.Context) *cobra.Command {
+	var cfg regclient.ClientCLI
+
+	cmd := &cobra.Command{
+		Use:     "gm",
+		Aliases: []string{"mj"},
+		Short:   "Client of a Regions API service for GM actions",
+		Example: "hege client gm (move|produce|...) $REGION_ID",
+		Args:    cobra.MinimumNArgs(1),
+		RunE:    nonLeaf,
+	}
+
+	roundMovement := &cobra.Command{
+		Use:     "move",
+		Aliases: []string{"movement", "mov"},
+		Short:   "Execute a movement round on the region",
+		Example: "hege client gm move $REGION",
+		Args:    cobra.ExactArgs(1),
+		RunE:    func(cmd *cobra.Command, args []string) error { return cfg.DoRegionMovement(ctx, args[0]) },
+	}
+
+	roundProduction := &cobra.Command{
+		Use:     "produce",
+		Aliases: []string{"production", "prod"},
+		Short:   "Execute a movement round on the region",
+		Example: "hege client gm move $REGION",
+		Args:    cobra.ExactArgs(1),
+		RunE:    func(cmd *cobra.Command, args []string) error { return cfg.DoRegionProduction(ctx, args[0]) },
+	}
+
+	getStats := &cobra.Command{
+		Use:     "stats",
+		Aliases: []string{"stat", "st"},
+		Short:   "Get the stats board of the region",
+		Example: "hege client gm stats $REGION",
+		Args:    cobra.ExactArgs(1),
+		RunE:    func(cmd *cobra.Command, args []string) error { return cfg.DoRegionGetStats(ctx, args[0]) },
+	}
+
+	getDetails := &cobra.Command{
+		Use:     "detail",
+		Aliases: []string{"details", "show", "city"},
+		Short:   "Display the details of a city in the region",
+		Example: "hege client gm detail $REGION $CITY",
+		Args:    cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return cfg.DoRegionGetCityDetail(ctx, args[0], args[1])
+		},
+	}
+
+	lcConfigure := &cobra.Command{
+		Use:     "config",
+		Aliases: []string{"cfg", "configure"},
+		Short:   "Apply a model to a City",
+		Example: "hege client gm config $REGION $CITY $MODEL",
+		Args:    cobra.ExactArgs(3),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return cfg.DoLifecyleConfigure(ctx, args[0], args[1], args[2])
+		},
+	}
+
+	lcAssign := &cobra.Command{
+		Use:     "assign",
+		Aliases: []string{"give"},
+		Short:   "Assign a user to a City",
+		Example: "hege client gm assign $REGION $CITY $USER",
+		Args:    cobra.ExactArgs(3),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return cfg.DoLifecyleAssign(ctx, args[0], args[1], args[2])
+		},
+	}
+
+	lcResume := &cobra.Command{
+		Use:     "resume",
+		Aliases: []string{"go"},
+		Short:   "Resume a paused city",
+		Example: "hege client gm resume $REGION $CITY",
+		Args:    cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return cfg.DoLifecyleResume(ctx, args[0], args[1])
+		},
+	}
+
+	lcDismiss := &cobra.Command{
+		Use:     "dismiss",
+		Aliases: []string{"fire"},
+		Short:   "Dismiss the user in charge of the city",
+		Example: "hege client gm dismiss $REGION $CITY",
+		Args:    cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return cfg.DoLifecyleDismiss(ctx, args[0], args[1])
+		},
+	}
+
+	lcSuspend := &cobra.Command{
+		Use:     "suspend",
+		Aliases: []string{"pause"},
+		Short:   "Put the city on hold",
+		Example: "hege client gm suspend $REGION $CITY",
+		Args:    cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return cfg.DoLifecyleSuspend(ctx, args[0], args[1])
+		},
+	}
+
+	lcReset := &cobra.Command{
+		Use:     "reset",
+		Aliases: []string{"give"},
+		Short:   "Reset a suspended city",
+		Example: "hege client gm reset $REGION $CITY",
+		Args:    cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return cfg.DoLifecyleReset(ctx, args[0], args[1])
+		},
+	}
+
+	cmd.AddCommand(roundMovement, roundProduction, getDetails, getStats)
+	cmd.AddCommand(lcConfigure, lcAssign, lcResume, lcDismiss, lcSuspend, lcReset)
+	return cmd
+}
+
+func clientAdmin(ctx context.Context) *cobra.Command {
+	var cfg regclient.ClientCLI
+
+	cmd := &cobra.Command{
+		Use:     "region",
+		Aliases: []string{"reg"},
+		Short:   "Client of a Regions API service",
+		Example: "hege client regions (create|list) ...",
+		Args:    cobra.MinimumNArgs(1),
+		RunE:    nonLeaf,
+	}
+
+	createRegion := &cobra.Command{
+		Use:     "create",
+		Aliases: []string{"new"},
+		Short:   "Create a new region",
+		Example: "hege client regions create $REGION_ID $MAP_ID",
+		Args:    cobra.ExactArgs(2),
+		RunE:    func(cmd *cobra.Command, args []string) error { return cfg.DoCreateRegion(ctx, args[0], args[1]) },
+	}
+
+	pushStats := &cobra.Command{
+		Use:     "stats_refresh",
+		Aliases: []string{"refresh", "stx"},
+		Short:   "Trigger a stats refresh by the region service, for the given region",
+		Example: "hege client regions refresh $REGION_ID",
+		Args:    cobra.ExactArgs(1),
+		RunE:    func(cmd *cobra.Command, args []string) error { return cfg.DoRegionPushStats(ctx, args[0]) },
+	}
+
+	cmd.AddCommand(createRegion, pushStats)
+	return cmd
+}
+
+func clientPublic(ctx context.Context) *cobra.Command {
+	var cfg regclient.ClientCLI
+
+	cmd := &cobra.Command{
+		Use:     "region",
+		Aliases: []string{"reg"},
+		Short:   "Client of a Regions API service",
+		Example: "hege client regions (create|list) ...",
+		Args:    cobra.MinimumNArgs(1),
+		RunE:    nonLeaf,
+	}
+
+	listRegions := &cobra.Command{
+		Use:     "list",
+		Aliases: []string{"ls", "all"},
+		Short:   "List the existing regions",
+		Example: "hege client regions list [$REGION_ID_MARKER]",
+		Args:    cobra.MaximumNArgs(1),
+		RunE:    func(cmd *cobra.Command, args []string) error { return cfg.DoListRegions(ctx, first(args)) },
+	}
+
+	listCities := &cobra.Command{
+		Use:     "cities",
+		Aliases: []string{},
+		Short:   "List the Cities on the region",
+		Example: "hege client regions cities $REGION_ID",
+		Args:    cobra.RangeArgs(1, 2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return cfg.DoListCities(ctx, first(args), second(args))
+		},
+	}
+
+	cmd.AddCommand(listRegions, listCities)
 	return cmd
 }
 

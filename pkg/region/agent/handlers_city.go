@@ -8,7 +8,6 @@ package regagent
 import (
 	"context"
 	"github.com/hegemonie-rpg/engine/pkg/region/model"
-	"github.com/hegemonie-rpg/engine/pkg/utils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"io"
@@ -19,10 +18,10 @@ import (
 type cityApp struct {
 	proto.UnimplementedCityServer
 
-	app *regionApp
+	app *regionBackend
 }
 
-func (s *cityApp) List(req *proto.CitiesByCharReq, stream proto.City_ListServer) error {
+func (s *cityApp) List(req *proto.CitiesByOwnerReq, stream proto.City_ListServer) error {
 	return s.app._regLock('r', req.Region, func(r *region.Region) error {
 		last := req.Marker
 		for {
@@ -32,32 +31,10 @@ func (s *cityApp) List(req *proto.CitiesByCharReq, stream proto.City_ListServer)
 			}
 			for _, c := range tab {
 				last = c.ID
-				if c.Owner != req.Character {
+				if c.Owner != req.User {
 					continue
 				}
-				err := stream.Send(showCityPublic(s.app.w, c, false))
-				if err == io.EOF {
-					return nil
-				}
-				if err != nil {
-					return err
-				}
-			}
-		}
-	})
-}
-
-func (s *cityApp) AllCities(req *proto.PaginatedU64Query, stream proto.City_AllCitiesServer) error {
-	return s.app._regLock('r', req.Region, func(r *region.Region) error {
-		last := req.Marker
-		for {
-			tab := r.Cities.Slice(last, 100)
-			if len(tab) <= 0 {
-				return nil
-			}
-			for _, c := range tab {
-				last = c.ID
-				err := stream.Send(showCityPublic(s.app.w, c, false))
+				err := stream.Send(showCityKey(r, c))
 				if err == io.EOF {
 					return nil
 				}
@@ -71,15 +48,7 @@ func (s *cityApp) AllCities(req *proto.PaginatedU64Query, stream proto.City_AllC
 
 func (s *cityApp) ShowAll(ctx context.Context, req *proto.CityId) (reply *proto.CityView, err error) {
 	err = s.app.cityLock('r', req, func(r *region.Region, c *region.City) error {
-		view := showCity(s.app.w, c)
-		utils.Logger.Debug().
-			Int("#a", len(view.Assets.Armies)).
-			Int("#k", len(view.Assets.Knowledges)).
-			Int("#b", len(view.Assets.Buildings)).
-			Int("#u", len(view.Assets.Units)).
-			Interface("prod", view.Production).
-			Interface("stock", view.Stock).
-			Msg("city")
+		view := showCity(r, c)
 		reply = view
 		return nil
 	})

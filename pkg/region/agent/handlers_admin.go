@@ -24,28 +24,14 @@ import (
 type adminApp struct {
 	proto.UnimplementedAdminServer
 
-	app *regionApp
+	app *regionBackend
 }
 
-func (app *adminApp) Produce(ctx context.Context, req *proto.RegionId) (*proto.None, error) {
-	return none, app.app._regLock('w', req.Region, func(r *region.Region) error {
-		r.Produce(ctx)
-		return nil
-	})
-}
-
-func (app *adminApp) Move(ctx context.Context, req *proto.RegionId) (*proto.None, error) {
-	return none, app.app._regLock('w', req.Region, func(r *region.Region) error {
-		r.Move(ctx)
-		return nil
-	})
-}
-
-func (app *adminApp) CreateRegion(ctx context.Context, req *proto.RegionCreateReq) (*proto.None, error) {
+func (app *adminApp) CreateRegion(ctx context.Context, req *proto.RegionCreateReq) (*proto.Created, error) {
 	//  first, load the cities from the maps repository
 	endpoint, err := utils.DefaultDiscovery.Map()
 	if err != nil {
-		return none, status.Errorf(codes.Internal, "configuration error: %v", err)
+		return nil, status.Errorf(codes.Internal, "configuration error: %v", err)
 	}
 
 	out := make([]region.NamedCity, 0)
@@ -75,59 +61,17 @@ func (app *adminApp) CreateRegion(ctx context.Context, req *proto.RegionCreateRe
 		return nil
 	})
 	if err != nil {
-		return none, errors.Trace(err)
+		return nil, errors.Trace(err)
 	}
 
-	return none, app.app._worldLock('w', func() error {
-		_, err := app.app.w.CreateRegion(req.Name, req.MapName, out)
+	var id string
+	err = app.app._worldLock('w', func() error {
+		r, err := app.app.w.CreateRegion(req.Name, req.MapName, out)
+		id = r.Name
 		return err
 	})
+	return &proto.Created{Id: id}, err
 }
-
-func (app *adminApp) ListRegions(req *proto.RegionListReq, stream proto.Admin_ListRegionsServer) error {
-	return app.app._worldLock('r', func() error {
-		for marker := req.NameMarker; ; {
-			tab := app.app.w.Regions.Slice(marker, 100)
-			if len(tab) <= 0 {
-				return nil
-			}
-			for _, x := range tab {
-				marker = x.Name
-				summary := &proto.RegionSummary{
-					Name:        x.Name,
-					MapName:     x.MapName,
-					CountCities: uint32(len(x.Cities)),
-					CountFights: uint32(len(x.Fights)),
-				}
-				err := stream.Send(summary)
-				if err != nil {
-					if err == io.EOF {
-						return nil
-					}
-					return err
-				}
-			}
-		}
-	})
-}
-
-func (app *adminApp) GetScores(req *proto.RegionId, stream proto.Admin_GetScoresServer) error {
-	return app.app._regLock('r', req.Region, func(r *region.Region) error {
-		for _, c := range r.Cities {
-			// FIXME(jfs): Calling Send() from a critical section is a bad idea
-			err := stream.Send(showCityPublic(app.app.w, c, true))
-			if err == io.EOF {
-				return nil
-			}
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	})
-}
-
-func s(u uint64) string { return strconv.FormatUint(u, 10) }
 
 func (app *adminApp) PushStats(ctx context.Context, req *proto.RegionId) (*proto.None, error) {
 	return none, app.app._regLock('r', req.Region, func(r *region.Region) error {
@@ -200,22 +144,6 @@ func (app *adminApp) PushStats(ctx context.Context, req *proto.RegionId) (*proto
 				AddField("moves", s(stats.Moves)).
 				SetTime(when)
 			writeAPI.WritePoint(p)
-		}
-		return nil
-	})
-}
-
-func (app *adminApp) GetStats(req *proto.RegionId, stream proto.Admin_GetStatsServer) error {
-	return app.app._regLock('r', req.Region, func(r *region.Region) error {
-		for _, c := range r.Cities {
-			// FIXME(jfs): Calling Send() from a critical section is a bad idea
-			err := stream.Send(showCityStats(r, c))
-			if err == io.EOF {
-				return nil
-			}
-			if err != nil {
-				return err
-			}
 		}
 		return nil
 	})
