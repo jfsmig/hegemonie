@@ -98,7 +98,7 @@ func (s *cityApp) ListArmies(req *proto.CityId, stream proto.City_ListArmiesServ
 	})
 }
 
-// Create an army made of only Units (no Resources carried)
+// Create an army made of only Troops (no Resources carried)
 func (s *cityApp) CreateArmy(ctx context.Context, req *proto.CreateArmyReq) (*proto.None, error) {
 	return none, s.app.cityLock('w', req.City, func(r *region.Region, c *region.City) error {
 		_, e := c.CreateArmyFromIds(r, req.Unit...)
@@ -106,7 +106,7 @@ func (s *cityApp) CreateArmy(ctx context.Context, req *proto.CreateArmyReq) (*pr
 	})
 }
 
-// Create an army made of only Resources (no Units)
+// Create an army made of only Resources (no Troops)
 func (s *cityApp) CreateTransport(ctx context.Context, req *proto.CreateTransportReq) (*proto.None, error) {
 	return none, s.app.cityLock('w', req.City, func(r *region.Region, c *region.City) error {
 		_, e := c.CreateTransport(r, resAbsP2M(req.Stock))

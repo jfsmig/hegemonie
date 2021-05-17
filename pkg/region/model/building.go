@@ -11,9 +11,9 @@ import (
 )
 
 func (s SetOfBuildingTypes) Frontier(pop int64, built []*Building, owned []*Knowledge) []*BuildingType {
-	bmap := make(map[uint64]bool)
-	pending := make(map[uint64]bool)
-	finished := make(map[uint64]bool)
+	bmap := make(map[string]bool)
+	pending := make(map[string]bool)
+	finished := make(map[string]bool)
 	for _, k := range owned {
 		if k.Ticks == 0 {
 			finished[k.Type] = true
@@ -72,7 +72,7 @@ func (c *City) StartBuilding(t *BuildingType) *Building {
 
 // Build forwards the call to StartBuilding if all the conditions are met, after the initial fee
 // given in the BuildingType
-func (c *City) Build(w *Region, bID uint64) (string, error) {
+func (c *City) Build(w *Region, bID string) (string, error) {
 	t := w.world.BuildingTypeGet(bID)
 	if t == nil {
 		return "", errors.NotFoundf("Building Type not found")
@@ -97,7 +97,7 @@ func (c *City) Build(w *Region, bID uint64) (string, error) {
 
 // Build forwards the call to StartBuilding if all the conditions are met, after the initial fee
 // given in the BuildingType
-func (c *City) InstantBuild(w *Region, bID uint64) error {
+func (c *City) InstantBuild(w *Region, bID string) error {
 	t := w.world.BuildingTypeGet(bID)
 	if t == nil {
 		return errors.NotFoundf("Building Type not found")

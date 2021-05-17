@@ -14,49 +14,105 @@ import (
 	"strconv"
 )
 
-// DoRegionProduction triggers the production of resources on all the cities of the named region
-func (cli *ClientCLI) DoRegionProduction(ctx context.Context, reg string) error {
+// ClientCLI gathers the actions destined to be exposed at the CLI, to manage a region service.
+type ClientCLI struct{}
+
+func (cli *ClientCLI) connect(ctx context.Context, action utils.ActionFunc) error {
+	endpoint, err := utils.DefaultDiscovery.Region()
+	if err != nil {
+		return errors.Trace(err)
+	}
+	return utils.Connect(ctx, endpoint, action)
+}
+
+func (cli *ClientCLI) DoCityBuild(ctx context.Context, regID, cityStrID, bStrID string) error {
+	cityID, err := strconv.ParseUint(cityStrID, 10, 64)
+	if err != nil {
+		return errors.Annotate(err, "Invalid city ID")
+	}
+
 	return cli.connect(ctx, func(ctx context.Context, cnx *grpc.ClientConn) error {
-		_, err := proto.NewGameMasterClient(cnx).Produce(ctx, &proto.RegionId{Region: reg})
+		inArgs := proto.BuildReq{
+			City:         &proto.CityId{Region: regID, City: cityID},
+			BuildingType: bStrID,
+		}
+		_, err = proto.NewCityClient(cnx).Build(ctx, &inArgs)
 		if err != nil {
 			return errors.Trace(err)
 		}
-		return utils.StatusJSON(200, reg, "Produced")
+		return utils.StatusJSON(200, "-", "Started")
 	})
 }
 
-// DoRegionMovement triggers one round of armies movement on all the cities of the named region
-func (cli *ClientCLI) DoRegionMovement(ctx context.Context, reg string) error {
+func (cli *ClientCLI) DoCityStudy(ctx context.Context, regID, cityStrID, sStrID string) error {
+	cityID, err := strconv.ParseUint(cityStrID, 10, 64)
+	if err != nil {
+		return errors.Annotate(err, "Invalid city ID")
+	}
+
 	return cli.connect(ctx, func(ctx context.Context, cnx *grpc.ClientConn) error {
-		_, err := proto.NewGameMasterClient(cnx).Move(ctx, &proto.RegionId{Region: reg})
+		inArgs := proto.StudyReq{
+			City:          &proto.CityId{Region: regID, City: cityID},
+			KnowledgeType: sStrID,
+		}
+		_, err = proto.NewCityClient(cnx).Study(ctx, &inArgs)
 		if err != nil {
 			return errors.Trace(err)
 		}
-		return utils.StatusJSON(200, reg, "Moved")
+		return utils.StatusJSON(200, "-", "Started")
 	})
 }
 
-// DoRegionGetStats triggers a refresh of the stats (of the Region with the
-// given ID) by the pointed region service
-func (cli *ClientCLI) DoRegionGetStats(ctx context.Context, reg string) error {
+func (cli *ClientCLI) DoCityTrain(ctx context.Context, regID, cityStrID, uStrID string) error {
+	cityID, err := strconv.ParseUint(cityStrID, 10, 64)
+	if err != nil {
+		return errors.Annotate(err, "Invalid city ID")
+	}
+
 	return cli.connect(ctx, func(ctx context.Context, cnx *grpc.ClientConn) error {
-		rep, err := proto.NewGameMasterClient(cnx).GetStats(ctx, &proto.RegionId{Region: reg})
+		inArgs := proto.TrainReq{
+			City:     &proto.CityId{Region: regID, City: cityID},
+			UnitType: uStrID,
+		}
+		_, err = proto.NewCityClient(cnx).Train(ctx, &inArgs)
 		if err != nil {
 			return errors.Trace(err)
 		}
-		return utils.EncodeStream(func() (interface{}, error) {
-			itf, err := rep.Recv()
-			if err != nil {
-				return nil, err
-			}
-			return (&_cityStatsRecord{}).importFrom(itf), nil
-		})
+		return utils.StatusJSON(200, "-", "Started")
 	})
 }
 
-type lifecycleFunc func(ctx context.Context, cnx proto.GameMasterClient, cityID *proto.CityId) (string, error)
+func (cli *ClientCLI) DoCityShow(ctx context.Context, regID, cityStrID string) error {
+	cityID, err := strconv.ParseUint(cityStrID, 10, 64)
+	if err != nil {
+		return errors.Annotate(err, "Invalid city ID")
+	}
+	return cli.connect(ctx, func(ctx context.Context, cnx *grpc.ClientConn) error {
+		cityView, err := proto.NewCityClient(cnx).ShowAll(ctx,
+			&proto.CityId{Region: regID, City: cityID})
+		if err != nil {
+			return errors.Trace(err)
+		}
+		return utils.DumpJSON((&_cityLightView{}).importFrom(cityView))
+	})
+}
 
-func (cli *ClientCLI) DoRegionGetCityDetail(ctx context.Context, reg, cityStrID string) error {
+func (cli *ClientCLI) DoCityShow2(ctx context.Context, regID, cityStrID string) error {
+	cityID, err := strconv.ParseUint(cityStrID, 10, 64)
+	if err != nil {
+		return errors.Annotate(err, "Invalid city ID")
+	}
+	return cli.connect(ctx, func(ctx context.Context, cnx *grpc.ClientConn) error {
+		cityView, err := proto.NewCityClient(cnx).ShowAll(ctx,
+			&proto.CityId{Region: regID, City: cityID})
+		if err != nil {
+			return errors.Trace(err)
+		}
+		return utils.DumpJSON((&_cityView{}).importFrom(cityView))
+	})
+}
+
+func (cli *ClientCLI) DoCityDetail(ctx context.Context, reg, cityStrID string) error {
 	cityID, err := strconv.ParseUint(cityStrID, 10, 64)
 	if err != nil {
 		return errors.Annotate(err, "Invalid city ID")
@@ -66,9 +122,11 @@ func (cli *ClientCLI) DoRegionGetCityDetail(ctx context.Context, reg, cityStrID 
 		if err != nil {
 			return errors.Trace(err)
 		}
-		return utils.DumpJSON(out)
+		return utils.DumpJSON((&_cityLightView{}).importFrom(out))
 	})
 }
+
+type lifecycleFunc func(ctx context.Context, cnx proto.GameMasterClient, cityID *proto.CityId) (string, error)
 
 func (cli *ClientCLI) doLifecyleAction(ctx context.Context, reg, cityStrID string, fn lifecycleFunc) error {
 	cityID, err := strconv.ParseUint(cityStrID, 10, 64)

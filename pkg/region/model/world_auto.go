@@ -440,7 +440,7 @@ func (s SetOfBuildingTypes) Less(i, j int) bool {
 }
 
 func (s SetOfBuildingTypes) areItemsUnique() bool {
-	var lastId uint64
+	var lastId string
 	for _, a := range s {
 		if lastId == a.ID {
 			return false
@@ -450,7 +450,7 @@ func (s SetOfBuildingTypes) areItemsUnique() bool {
 	return true
 }
 
-func (s SetOfBuildingTypes) Slice(marker uint64, max uint32) []*BuildingType {
+func (s SetOfBuildingTypes) Slice(marker string, max uint32) []*BuildingType {
 	if max == 0 {
 		max = 1000
 	} else if max > 100000 {
@@ -469,7 +469,7 @@ func (s SetOfBuildingTypes) Slice(marker uint64, max uint32) []*BuildingType {
 	return s[start : uint32(start)+remaining]
 }
 
-func (s SetOfBuildingTypes) getIndex(id uint64) int {
+func (s SetOfBuildingTypes) getIndex(id string) int {
 	i := sort.Search(len(s), func(i int) bool {
 		return s[i].ID >= id
 	})
@@ -479,7 +479,7 @@ func (s SetOfBuildingTypes) getIndex(id uint64) int {
 	return -1
 }
 
-func (s SetOfBuildingTypes) Get(id uint64) *BuildingType {
+func (s SetOfBuildingTypes) Get(id string) *BuildingType {
 	var out *BuildingType
 	idx := s.getIndex(id)
 	if idx >= 0 {
@@ -488,7 +488,7 @@ func (s SetOfBuildingTypes) Get(id uint64) *BuildingType {
 	return out
 }
 
-func (s SetOfBuildingTypes) Has(id uint64) bool {
+func (s SetOfBuildingTypes) Has(id string) bool {
 	return s.getIndex(id) >= 0
 }
 
@@ -496,7 +496,7 @@ func (s *SetOfBuildingTypes) Remove(a *BuildingType) {
 	s.RemovePK(a.ID)
 }
 
-func (s *SetOfBuildingTypes) RemovePK(pk uint64) {
+func (s *SetOfBuildingTypes) RemovePK(pk string) {
 	idx := s.getIndex(pk)
 	if idx >= 0 && idx < len(*s) {
 		if len(*s) == 1 {
@@ -1060,7 +1060,7 @@ func (s SetOfKnowledgeTypes) Less(i, j int) bool {
 }
 
 func (s SetOfKnowledgeTypes) areItemsUnique() bool {
-	var lastId uint64
+	var lastId string
 	for _, a := range s {
 		if lastId == a.ID {
 			return false
@@ -1070,7 +1070,7 @@ func (s SetOfKnowledgeTypes) areItemsUnique() bool {
 	return true
 }
 
-func (s SetOfKnowledgeTypes) Slice(marker uint64, max uint32) []*KnowledgeType {
+func (s SetOfKnowledgeTypes) Slice(marker string, max uint32) []*KnowledgeType {
 	if max == 0 {
 		max = 1000
 	} else if max > 100000 {
@@ -1089,7 +1089,7 @@ func (s SetOfKnowledgeTypes) Slice(marker uint64, max uint32) []*KnowledgeType {
 	return s[start : uint32(start)+remaining]
 }
 
-func (s SetOfKnowledgeTypes) getIndex(id uint64) int {
+func (s SetOfKnowledgeTypes) getIndex(id string) int {
 	i := sort.Search(len(s), func(i int) bool {
 		return s[i].ID >= id
 	})
@@ -1099,7 +1099,7 @@ func (s SetOfKnowledgeTypes) getIndex(id uint64) int {
 	return -1
 }
 
-func (s SetOfKnowledgeTypes) Get(id uint64) *KnowledgeType {
+func (s SetOfKnowledgeTypes) Get(id string) *KnowledgeType {
 	var out *KnowledgeType
 	idx := s.getIndex(id)
 	if idx >= 0 {
@@ -1108,7 +1108,7 @@ func (s SetOfKnowledgeTypes) Get(id uint64) *KnowledgeType {
 	return out
 }
 
-func (s SetOfKnowledgeTypes) Has(id uint64) bool {
+func (s SetOfKnowledgeTypes) Has(id string) bool {
 	return s.getIndex(id) >= 0
 }
 
@@ -1116,7 +1116,7 @@ func (s *SetOfKnowledgeTypes) Remove(a *KnowledgeType) {
 	s.RemovePK(a.ID)
 }
 
-func (s *SetOfKnowledgeTypes) RemovePK(pk uint64) {
+func (s *SetOfKnowledgeTypes) RemovePK(pk string) {
 	idx := s.getIndex(pk)
 	if idx >= 0 && idx < len(*s) {
 		if len(*s) == 1 {
@@ -1308,7 +1308,7 @@ func (s SetOfUnitTypes) Less(i, j int) bool {
 }
 
 func (s SetOfUnitTypes) areItemsUnique() bool {
-	var lastId uint64
+	var lastId string
 	for _, a := range s {
 		if lastId == a.ID {
 			return false
@@ -1318,7 +1318,7 @@ func (s SetOfUnitTypes) areItemsUnique() bool {
 	return true
 }
 
-func (s SetOfUnitTypes) Slice(marker uint64, max uint32) []*UnitType {
+func (s SetOfUnitTypes) Slice(marker string, max uint32) []*UnitType {
 	if max == 0 {
 		max = 1000
 	} else if max > 100000 {
@@ -1337,7 +1337,7 @@ func (s SetOfUnitTypes) Slice(marker uint64, max uint32) []*UnitType {
 	return s[start : uint32(start)+remaining]
 }
 
-func (s SetOfUnitTypes) getIndex(id uint64) int {
+func (s SetOfUnitTypes) getIndex(id string) int {
 	i := sort.Search(len(s), func(i int) bool {
 		return s[i].ID >= id
 	})
@@ -1347,7 +1347,7 @@ func (s SetOfUnitTypes) getIndex(id uint64) int {
 	return -1
 }
 
-func (s SetOfUnitTypes) Get(id uint64) *UnitType {
+func (s SetOfUnitTypes) Get(id string) *UnitType {
 	var out *UnitType
 	idx := s.getIndex(id)
 	if idx >= 0 {
@@ -1356,7 +1356,7 @@ func (s SetOfUnitTypes) Get(id uint64) *UnitType {
 	return out
 }
 
-func (s SetOfUnitTypes) Has(id uint64) bool {
+func (s SetOfUnitTypes) Has(id string) bool {
 	return s.getIndex(id) >= 0
 }
 
@@ -1364,7 +1364,7 @@ func (s *SetOfUnitTypes) Remove(a *UnitType) {
 	s.RemovePK(a.ID)
 }
 
-func (s *SetOfUnitTypes) RemovePK(pk uint64) {
+func (s *SetOfUnitTypes) RemovePK(pk string) {
 	idx := s.getIndex(pk)
 	if idx >= 0 && idx < len(*s) {
 		if len(*s) == 1 {

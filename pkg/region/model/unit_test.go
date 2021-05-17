@@ -23,7 +23,7 @@ func TestUnitFrontier(t *testing.T) {
 
 	var f []*UnitType
 
-	// Units without requirement
+	// Troops without requirement
 	f = ut.Frontier(SetOfBuildings{})
 	if len(f) != 1 {
 		t.Fatal()
@@ -33,7 +33,7 @@ func TestUnitFrontier(t *testing.T) {
 		t.Fatal()
 	}
 
-	// Units with requirements
+	// Troops with requirements
 	f = ut.Frontier(SetOfBuildings{&Building{ID: "1", Type: 1}, &Building{ID: "3", Type: 3}})
 	if len(f) != 2 {
 		t.Fatal()

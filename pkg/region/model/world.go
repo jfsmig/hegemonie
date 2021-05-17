@@ -83,7 +83,7 @@ func (w *World) CreateRegion(name, mapName string, cities []NamedCity) (*Region,
 	return r, nil
 }
 
-func (w *World) UnitTypeGet(id uint64) *UnitType {
+func (w *World) UnitTypeGet(id string) *UnitType {
 	return w.Definitions.Units.Get(id)
 }
 
@@ -91,7 +91,7 @@ func (w *World) UnitGetFrontier(owned []*Building) []*UnitType {
 	return w.Definitions.Units.Frontier(owned)
 }
 
-func (w *World) BuildingTypeGet(id uint64) *BuildingType {
+func (w *World) BuildingTypeGet(id string) *BuildingType {
 	return w.Definitions.Buildings.Get(id)
 }
 
@@ -100,7 +100,7 @@ func (w *World) BuildingGetFrontier(pop int64, built []*Building, owned []*Knowl
 	return w.Definitions.Buildings.Frontier(pop, built, owned)
 }
 
-func (w *World) KnowledgeTypeGet(id uint64) *KnowledgeType {
+func (w *World) KnowledgeTypeGet(id string) *KnowledgeType {
 	return w.Definitions.Knowledges.Get(id)
 }
 

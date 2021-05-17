@@ -12,8 +12,8 @@ import (
 
 // TODO(jfs): Maybe speed the execution with a reverse index of Requires
 func (s SetOfKnowledgeTypes) Frontier(owned []*Knowledge) []*KnowledgeType {
-	pending := make(map[uint64]bool)
-	finished := make(map[uint64]bool)
+	pending := make(map[string]bool)
+	finished := make(map[string]bool)
 	for _, k := range owned {
 		if k.Ticks == 0 {
 			finished[k.Type] = true
@@ -48,7 +48,7 @@ func (s SetOfKnowledgeTypes) Frontier(owned []*Knowledge) []*KnowledgeType {
 	return result
 }
 
-func CheckKnowledgeDependencies(owned SetOfKnowledgeTypes, required, forbidden []uint64) bool {
+func CheckKnowledgeDependencies(owned SetOfKnowledgeTypes, required, forbidden []string) bool {
 	for _, k := range forbidden {
 		if owned.Has(k) {
 			return false
@@ -77,7 +77,7 @@ func (c *City) StartStudy(pType *KnowledgeType) *Knowledge {
 	return k
 }
 
-func (c *City) Study(w *Region, typeID uint64) (string, error) {
+func (c *City) Study(w *Region, typeID string) (string, error) {
 	t := w.world.KnowledgeTypeGet(typeID)
 	if t == nil {
 		return "", errors.NotFoundf("knowledge type not found")
@@ -96,7 +96,7 @@ func (c *City) Study(w *Region, typeID uint64) (string, error) {
 	return k.ID, nil
 }
 
-func (c *City) InstantStudy(w *Region, typeID uint64) error {
+func (c *City) InstantStudy(w *Region, typeID string) error {
 	t := w.world.KnowledgeTypeGet(typeID)
 	if t == nil {
 		return errors.NotFoundf("knowledge type not found")

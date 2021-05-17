@@ -134,7 +134,7 @@ func (evt *logEvtArmy) Send() {
 
 func (evt *logEvtKnowledge) Item(c *City, k *KnowledgeType) EventKnowledge {
 	evt.sub.Item(c, k)
-	evt.log.Uint64("city", c.ID).Uint64("id", k.ID)
+	evt.log.Uint64("city", c.ID).Str("id", k.ID)
 	return evt
 }
 
@@ -151,7 +151,7 @@ func (evt *logEvtKnowledge) Send() {
 
 func (evt *logEvtUnits) Item(c *City, u *UnitType) EventUnits {
 	evt.sub.Item(c, u)
-	evt.log.Uint64("city", c.ID).Uint64("id", u.ID)
+	evt.log.Uint64("city", c.ID).Str("id", u.ID)
 	return evt
 }
 

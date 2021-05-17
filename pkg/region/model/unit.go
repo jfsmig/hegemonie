@@ -19,13 +19,13 @@ func (reg *Region) UnitGet(city uint64, id string) *Unit {
 }
 
 func (s SetOfUnitTypes) Frontier(owned []*Building) []*UnitType {
-	bIndex := make(map[uint64]bool)
+	bIndex := make(map[string]bool)
 	for _, b := range owned {
 		bIndex[b.Type] = true
 	}
 	result := make([]*UnitType, 0)
 	for _, ut := range s {
-		if ut.RequiredBuilding == 0 || bIndex[ut.RequiredBuilding] {
+		if ut.RequiredBuilding == "" || bIndex[ut.RequiredBuilding] {
 			result = append(result, ut)
 		}
 	}
@@ -50,7 +50,7 @@ func (c *City) StartUnit(w *Region, pType *UnitType) *Unit {
 
 // Start the training of a Unit of the given UnitType (id).
 // The whole chain of requirements will be checked.
-func (c *City) Train(w *Region, typeID uint64) (string, error) {
+func (c *City) Train(w *Region, typeID string) (string, error) {
 	t := w.world.UnitTypeGet(typeID)
 	if t == nil {
 		return "", errors.NotFoundf("unit type not found")
@@ -64,7 +64,7 @@ func (c *City) Train(w *Region, typeID uint64) (string, error) {
 	return u.ID, nil
 }
 
-func (c *City) InstantTrain(w *Region, typeID uint64) error {
+func (c *City) InstantTrain(w *Region, typeID string) error {
 	t := w.world.UnitTypeGet(typeID)
 	if t == nil {
 		return errors.NotFoundf("unit type not found")

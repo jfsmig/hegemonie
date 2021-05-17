@@ -115,7 +115,7 @@ func (c *City) ComputePopularity(r *Region) int64 {
 	w := r.GetWorld()
 	pop := c.PermanentPopularity
 
-	// Add Transient values for Units in the Armies
+	// Add Transient values for Troops in the Armies
 	for _, a := range c.Armies {
 		for _, u := range a.Units {
 			ut := w.UnitTypeGet(u.Type)
@@ -124,7 +124,7 @@ func (c *City) ComputePopularity(r *Region) int64 {
 		pop += w.Config.PopBonusArmyAlive
 	}
 
-	// Add Transient values for Units in the City
+	// Add Transient values for Troops in the City
 	for _, u := range c.Units {
 		ut := w.UnitTypeGet(u.Type)
 		pop += ut.PopBonus
@@ -328,7 +328,7 @@ func (c *City) Produce(_ context.Context, w *Region) {
 	}
 
 	// ATM the stock maybe still stores resources. We use them to make the assets evolve.
-	// We arbitrarily give the preference to Units, then Buildings and eventually the
+	// We arbitrarily give the preference to Troops, then Buildings and eventually the
 	// Knowledge.
 
 	for _, u := range c.Units {
@@ -498,7 +498,7 @@ func (c *City) UnitFrontier(w *Region) []*UnitType {
 // check the current City has all the requirements to train a Unti of the
 // given UnitType.
 func (c *City) UnitAllowed(t *UnitType) bool {
-	if t.RequiredBuilding == 0 {
+	if t.RequiredBuilding == "" {
 		return true
 	}
 	for _, b := range c.Buildings {

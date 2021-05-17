@@ -993,11 +993,11 @@ var Templates_ServiceDesc = grpc.ServiceDesc{
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type DefinitionsClient interface {
 	// Return (a page of) a list of all the Units that are possible in the world
-	ListUnits(ctx context.Context, in *PaginatedU64Query, opts ...grpc.CallOption) (Definitions_ListUnitsClient, error)
+	ListUnits(ctx context.Context, in *PaginatedStrQuery, opts ...grpc.CallOption) (Definitions_ListUnitsClient, error)
 	// Return (a page of) a list of all the Buildings that are possible in the world
-	ListBuildings(ctx context.Context, in *PaginatedU64Query, opts ...grpc.CallOption) (Definitions_ListBuildingsClient, error)
+	ListBuildings(ctx context.Context, in *PaginatedStrQuery, opts ...grpc.CallOption) (Definitions_ListBuildingsClient, error)
 	// Return (a page of) a list of all the Knowledge that are possible in the world
-	ListKnowledges(ctx context.Context, in *PaginatedU64Query, opts ...grpc.CallOption) (Definitions_ListKnowledgesClient, error)
+	ListKnowledges(ctx context.Context, in *PaginatedStrQuery, opts ...grpc.CallOption) (Definitions_ListKnowledgesClient, error)
 }
 
 type definitionsClient struct {
@@ -1008,7 +1008,7 @@ func NewDefinitionsClient(cc grpc.ClientConnInterface) DefinitionsClient {
 	return &definitionsClient{cc}
 }
 
-func (c *definitionsClient) ListUnits(ctx context.Context, in *PaginatedU64Query, opts ...grpc.CallOption) (Definitions_ListUnitsClient, error) {
+func (c *definitionsClient) ListUnits(ctx context.Context, in *PaginatedStrQuery, opts ...grpc.CallOption) (Definitions_ListUnitsClient, error) {
 	stream, err := c.cc.NewStream(ctx, &Definitions_ServiceDesc.Streams[0], "/hege.reg.Definitions/ListUnits", opts...)
 	if err != nil {
 		return nil, err
@@ -1040,7 +1040,7 @@ func (x *definitionsListUnitsClient) Recv() (*UnitTypeView, error) {
 	return m, nil
 }
 
-func (c *definitionsClient) ListBuildings(ctx context.Context, in *PaginatedU64Query, opts ...grpc.CallOption) (Definitions_ListBuildingsClient, error) {
+func (c *definitionsClient) ListBuildings(ctx context.Context, in *PaginatedStrQuery, opts ...grpc.CallOption) (Definitions_ListBuildingsClient, error) {
 	stream, err := c.cc.NewStream(ctx, &Definitions_ServiceDesc.Streams[1], "/hege.reg.Definitions/ListBuildings", opts...)
 	if err != nil {
 		return nil, err
@@ -1072,7 +1072,7 @@ func (x *definitionsListBuildingsClient) Recv() (*BuildingTypeView, error) {
 	return m, nil
 }
 
-func (c *definitionsClient) ListKnowledges(ctx context.Context, in *PaginatedU64Query, opts ...grpc.CallOption) (Definitions_ListKnowledgesClient, error) {
+func (c *definitionsClient) ListKnowledges(ctx context.Context, in *PaginatedStrQuery, opts ...grpc.CallOption) (Definitions_ListKnowledgesClient, error) {
 	stream, err := c.cc.NewStream(ctx, &Definitions_ServiceDesc.Streams[2], "/hege.reg.Definitions/ListKnowledges", opts...)
 	if err != nil {
 		return nil, err
@@ -1109,11 +1109,11 @@ func (x *definitionsListKnowledgesClient) Recv() (*KnowledgeTypeView, error) {
 // for forward compatibility
 type DefinitionsServer interface {
 	// Return (a page of) a list of all the Units that are possible in the world
-	ListUnits(*PaginatedU64Query, Definitions_ListUnitsServer) error
+	ListUnits(*PaginatedStrQuery, Definitions_ListUnitsServer) error
 	// Return (a page of) a list of all the Buildings that are possible in the world
-	ListBuildings(*PaginatedU64Query, Definitions_ListBuildingsServer) error
+	ListBuildings(*PaginatedStrQuery, Definitions_ListBuildingsServer) error
 	// Return (a page of) a list of all the Knowledge that are possible in the world
-	ListKnowledges(*PaginatedU64Query, Definitions_ListKnowledgesServer) error
+	ListKnowledges(*PaginatedStrQuery, Definitions_ListKnowledgesServer) error
 	mustEmbedUnimplementedDefinitionsServer()
 }
 
@@ -1121,13 +1121,13 @@ type DefinitionsServer interface {
 type UnimplementedDefinitionsServer struct {
 }
 
-func (UnimplementedDefinitionsServer) ListUnits(*PaginatedU64Query, Definitions_ListUnitsServer) error {
+func (UnimplementedDefinitionsServer) ListUnits(*PaginatedStrQuery, Definitions_ListUnitsServer) error {
 	return status.Errorf(codes.Unimplemented, "method ListUnits not implemented")
 }
-func (UnimplementedDefinitionsServer) ListBuildings(*PaginatedU64Query, Definitions_ListBuildingsServer) error {
+func (UnimplementedDefinitionsServer) ListBuildings(*PaginatedStrQuery, Definitions_ListBuildingsServer) error {
 	return status.Errorf(codes.Unimplemented, "method ListBuildings not implemented")
 }
-func (UnimplementedDefinitionsServer) ListKnowledges(*PaginatedU64Query, Definitions_ListKnowledgesServer) error {
+func (UnimplementedDefinitionsServer) ListKnowledges(*PaginatedStrQuery, Definitions_ListKnowledgesServer) error {
 	return status.Errorf(codes.Unimplemented, "method ListKnowledges not implemented")
 }
 func (UnimplementedDefinitionsServer) mustEmbedUnimplementedDefinitionsServer() {}
@@ -1144,7 +1144,7 @@ func RegisterDefinitionsServer(s grpc.ServiceRegistrar, srv DefinitionsServer) {
 }
 
 func _Definitions_ListUnits_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(PaginatedU64Query)
+	m := new(PaginatedStrQuery)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
@@ -1165,7 +1165,7 @@ func (x *definitionsListUnitsServer) Send(m *UnitTypeView) error {
 }
 
 func _Definitions_ListBuildings_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(PaginatedU64Query)
+	m := new(PaginatedStrQuery)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
@@ -1186,7 +1186,7 @@ func (x *definitionsListBuildingsServer) Send(m *BuildingTypeView) error {
 }
 
 func _Definitions_ListKnowledges_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(PaginatedU64Query)
+	m := new(PaginatedStrQuery)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}

@@ -15,7 +15,7 @@ import (
 
 func (cli *ClientCLI) DoRegionGetBuildings(ctx context.Context, reg string) error {
 	return cli.connect(ctx, func(ctx context.Context, cnx *grpc.ClientConn) error {
-		out, err := proto.NewDefinitionsClient(cnx).ListBuildings(ctx, &proto.PaginatedU64Query{})
+		out, err := proto.NewDefinitionsClient(cnx).ListBuildings(ctx, &proto.PaginatedStrQuery{})
 		if err != nil {
 			return errors.Trace(err)
 		}
@@ -25,7 +25,7 @@ func (cli *ClientCLI) DoRegionGetBuildings(ctx context.Context, reg string) erro
 
 func (cli *ClientCLI) DoRegionGetSkills(ctx context.Context, reg string) error {
 	return cli.connect(ctx, func(ctx context.Context, cnx *grpc.ClientConn) error {
-		out, err := proto.NewDefinitionsClient(cnx).ListKnowledges(ctx, &proto.PaginatedU64Query{})
+		out, err := proto.NewDefinitionsClient(cnx).ListKnowledges(ctx, &proto.PaginatedStrQuery{})
 		if err != nil {
 			return errors.Trace(err)
 		}
@@ -35,7 +35,7 @@ func (cli *ClientCLI) DoRegionGetSkills(ctx context.Context, reg string) error {
 
 func (cli *ClientCLI) DoRegionGetUnits(ctx context.Context, reg string) error {
 	return cli.connect(ctx, func(ctx context.Context, cnx *grpc.ClientConn) error {
-		out, err := proto.NewDefinitionsClient(cnx).ListUnits(ctx, &proto.PaginatedU64Query{})
+		out, err := proto.NewDefinitionsClient(cnx).ListUnits(ctx, &proto.PaginatedStrQuery{})
 		if err != nil {
 			return errors.Trace(err)
 		}

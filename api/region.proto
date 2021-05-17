@@ -60,13 +60,13 @@ service Templates {
 // Read-Only, Publicly available
 service Definitions {
   // Return (a page of) a list of all the Units that are possible in the world
-  rpc ListUnits (PaginatedU64Query) returns (stream UnitTypeView) {}
+  rpc ListUnits (PaginatedStrQuery) returns (stream UnitTypeView) {}
 
   // Return (a page of) a list of all the Buildings that are possible in the world
-  rpc ListBuildings (PaginatedU64Query) returns (stream BuildingTypeView) {}
+  rpc ListBuildings (PaginatedStrQuery) returns (stream BuildingTypeView) {}
 
   // Return (a page of) a list of all the Knowledge that are possible in the world
-  rpc ListKnowledges (PaginatedU64Query) returns (stream KnowledgeTypeView) {}
+  rpc ListKnowledges (PaginatedStrQuery) returns (stream KnowledgeTypeView) {}
 }
 
 // Restricted to registered users
@@ -251,7 +251,7 @@ message ProductionView {
 
 
 message UnitTypeView {
-  uint64 id = 1;
+  string id = 1;
   string name = 2;
   uint32 ticks = 3;
   uint32 health = 4;
@@ -262,7 +262,7 @@ message UnitView {
   UnitTypeView type = 1;
 
   string id = 2;
-  uint64 idType = 3;
+  string idType = 3;
   uint32 ticks = 4;
   uint32 health = 5;
 }
@@ -270,7 +270,7 @@ message UnitView {
 
 
 message BuildingTypeRef {
-  uint64 id = 1;
+  string id = 1;
   string name = 2;
   uint32 ticks = 3;
 }
@@ -288,8 +288,8 @@ message BuildingTypePrivate {
   int64 popFall = 2;
   int64 popDestroy = 3;
   int64 popDismantle = 4;
-  repeated uint64 requires = 5;
-  repeated uint64 conflicts = 6;
+  repeated string requires = 5;
+  repeated string conflicts = 6;
 }
 
 message BuildingTypeView {
@@ -301,14 +301,14 @@ message BuildingTypeView {
 message BuildingView {
   BuildingTypeRef type = 1;
   string id = 2;
-  uint64 idType = 3;
+  string idType = 3;
   uint32 ticks = 4;
 }
 
 
 
 message KnowledgeTypeView {
-  uint64 id = 1;
+  string id = 1;
   string name = 2;
   uint32 ticks = 3;
 }
@@ -316,7 +316,7 @@ message KnowledgeTypeView {
 message KnowledgeView {
   KnowledgeTypeView type = 1;
   string id = 2;
-  uint64 idType = 3;
+  string idType = 3;
   uint32 ticks = 4;
 }
 
@@ -397,9 +397,9 @@ message CityTemplate {
   ResourcesAbs stock = 4;
   ResourcesAbs stockCapacity = 5;
   ResourcesAbs production = 6;
-  repeated uint64 buildingTypes = 7;
-  repeated uint64 skillTypes = 8;
-  repeated uint64 unitTypes = 9;
+  repeated string buildingTypes = 7;
+  repeated string skillTypes = 8;
+  repeated string unitTypes = 9;
 }
 
 message CityView {
@@ -452,17 +452,17 @@ message LifecycleAssignReq {
 
 message StudyReq {
   CityId city = 1;
-  uint64 knowledgeType = 2;
+  string knowledgeType = 2;
 }
 
 message TrainReq {
   CityId city = 1;
-  uint64 unitType = 2;
+  string unitType = 2;
 }
 
 message BuildReq {
   CityId city = 1;
-  uint64 buildingType = 2;
+  string buildingType = 2;
 }
 
 message CreateTransportReq {

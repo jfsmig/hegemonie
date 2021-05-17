@@ -1,6 +1,6 @@
 [
 	{
-		"Id": 1,
+		"Id": "1",
 		"Name": "Peon",
 		"Health": 100,
 		"HealthFactor": 0.5,

@@ -224,7 +224,7 @@ func showCityKey(r *region.Region, c *region.City) *proto.CityKey {
 
 func showCityPublic(r *region.Region, c *region.City) *proto.CityView {
 	return &proto.CityView{
-		Key:   showCityKey(r, c),
+		Key: showCityKey(r, c),
 		Constants: &proto.CityConstants{
 			Alignment: c.Alignment,
 			Chaos:     c.Chaotic,
@@ -275,9 +275,9 @@ func showCityTemplate(r *region.Region, c *region.City) *proto.CityTemplate {
 	rc.Stock = resAbsM2P(c.Stock)
 	rc.StockCapacity = resAbsM2P(c.StockCapacity)
 	rc.Production = resAbsM2P(c.Production)
-	rc.BuildingTypes = make([]uint64, 0)
-	rc.SkillTypes = make([]uint64, 0)
-	rc.UnitTypes = make([]uint64, 0)
+	rc.BuildingTypes = make([]string, 0)
+	rc.SkillTypes = make([]string, 0)
+	rc.UnitTypes = make([]string, 0)
 	for _, x := range c.Buildings {
 		rc.BuildingTypes = append(rc.BuildingTypes, x.Type)
 	}

@@ -149,12 +149,12 @@ type ResourcesMultiplier [ResourceMax]float64
 
 type Artifact struct {
 	// UUID
-	ID string `json:"id"`
+	ID string `json:"Id"`
 	// UUID
-	Type string `json:"type"`
+	Type string
 	// UUID
-	Name    string `json:"name"`
-	Visible bool   `json:"visible,omitempty"`
+	Name    string
+	Visible bool `json:"Visible,omitempty"`
 }
 
 type ResourceModifiers struct {
@@ -315,7 +315,7 @@ type City struct {
 }
 
 type KnowledgeType struct {
-	ID    uint64 `json:"Id"`
+	ID    string `json:"Id"`
 	Name  string `json:"Name"`
 	Ticks uint32 `json:",omitempty"`
 
@@ -345,21 +345,21 @@ type KnowledgeType struct {
 
 	// All the knowledges that are required to start the current Knowledge
 	// (this is an AND, not an OR)
-	Requires []uint64
+	Requires []string
 
 	// All the knowledge that are forbidden by the current knowledge
-	Conflicts []uint64
+	Conflicts []string
 }
 
 type Knowledge struct {
 	ID    string `json:"Id"`
-	Type  uint64
-	Ticks uint32 `json:",omitempty"`
+	Type  string
+	Ticks uint32 `json:"Ticks,omitempty"`
 }
 
 type BuildingType struct {
 	// Unique ID of the BuildingType
-	ID uint64 `json:"Id"`
+	ID string `json:"Id"`
 
 	// Display name of the current BuildingType
 	Name string
@@ -402,11 +402,11 @@ type BuildingType struct {
 
 	// A set of KnowledgeType ID that must all be present in a City to let that City start
 	// this kind of building.
-	Requires []uint64
+	Requires []string
 
 	// A set of KnowledgeType ID that must all be absent in a City to let that City start
 	// this kind of building.
-	Conflicts []uint64
+	Conflicts []string
 }
 
 type Building struct {
@@ -414,7 +414,7 @@ type Building struct {
 	ID string `json:"Id"`
 
 	// The unique ID of the BuildingType associated to the current Building
-	Type uint64
+	Type string
 
 	// How many construction rounds remain before the building's achievement
 	Ticks uint32 `json:",omitempty"`
@@ -424,7 +424,7 @@ type Building struct {
 // behavior of the Unit.
 type UnitType struct {
 	// Unique ID of the Unit Type
-	ID uint64 `json:"Id"`
+	ID string `json:"Id"`
 
 	// The number of health point for that type of unit.
 	// A health equal to 0 means the death of the unit.
@@ -472,7 +472,7 @@ type UnitType struct {
 	ReqPop int64
 
 	// A UnitType is only dependant on the presence of a Building of that BuildingType.
-	RequiredBuilding uint64
+	RequiredBuilding string
 }
 
 // Unit is the part of an Army that can participate to a Fight.
@@ -482,7 +482,7 @@ type Unit struct {
 	ID string `json:"Id"`
 
 	// A copy of the definition for the current Unit.
-	Type uint64
+	Type string `json:"idtype"`
 
 	// How many ticks remain before the Troop training is finished
 	Ticks uint32
@@ -588,12 +588,12 @@ type SetOfFights []*Fight
 //go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./world_auto.go region:SetOfArtifacts:*Artifact ID:string
 //go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./world_auto.go region:SetOfArmies:*Army ID:string
 //go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./world_auto.go region:SetOfBuildings:*Building ID:string
-//go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./world_auto.go region:SetOfBuildingTypes:*BuildingType
+//go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./world_auto.go region:SetOfBuildingTypes:*BuildingType ID:string
 //go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./world_auto.go region:SetOfCities:*City
 //go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./world_auto.go region:SetOfTemplates:*City Name:string
 //go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./world_auto.go region:SetOfId:uint64 :uint64
 //go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./world_auto.go region:SetOfKnowledges:*Knowledge ID:string
-//go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./world_auto.go region:SetOfKnowledgeTypes:*KnowledgeType
+//go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./world_auto.go region:SetOfKnowledgeTypes:*KnowledgeType ID:string
 //go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./world_auto.go region:SetOfUnits:*Unit ID:string
-//go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./world_auto.go region:SetOfUnitTypes:*UnitType
+//go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./world_auto.go region:SetOfUnitTypes:*UnitType ID:string
 //go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./world_auto.go region:SetOfRegions:*Region Name:string
