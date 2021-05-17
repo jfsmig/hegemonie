@@ -881,23 +881,23 @@ func (s *SetOfId) RemovePK(pk uint64) {
 	}
 }
 
-type SetOfKnowledges []*Knowledge
+type SetOfSkills []*Skill
 
-func (s SetOfKnowledges) CheckThenFail() {
+func (s SetOfSkills) CheckThenFail() {
 	if err := s.Check(); err != nil {
 		panic(err.Error())
 	}
 }
 
-func (s SetOfKnowledges) Len() int {
+func (s SetOfSkills) Len() int {
 	return len(s)
 }
 
-func (s SetOfKnowledges) Swap(i, j int) {
+func (s SetOfSkills) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
 }
 
-func (s *SetOfKnowledges) Add(a *Knowledge) {
+func (s *SetOfSkills) Add(a *Skill) {
 	*s = append(*s, a)
 	switch nb := len(*s); nb {
 	case 0:
@@ -913,7 +913,7 @@ func (s *SetOfKnowledges) Add(a *Knowledge) {
 	}
 }
 
-func (s SetOfKnowledges) Check() error {
+func (s SetOfSkills) Check() error {
 	if !sort.IsSorted(s) {
 		return errors.NotValidf("sorting (%v) %v", s.Len(), s)
 	}
@@ -923,7 +923,7 @@ func (s SetOfKnowledges) Check() error {
 	return nil
 }
 
-func (s *SetOfKnowledges) testRandomVacuum() {
+func (s *SetOfSkills) testRandomVacuum() {
 	for s.Len() > 0 {
 		idx := rand.Intn(s.Len())
 		s.Remove((*s)[idx])
@@ -931,11 +931,11 @@ func (s *SetOfKnowledges) testRandomVacuum() {
 	}
 }
 
-func (s SetOfKnowledges) Less(i, j int) bool {
+func (s SetOfSkills) Less(i, j int) bool {
 	return s[i].ID < s[j].ID
 }
 
-func (s SetOfKnowledges) areItemsUnique() bool {
+func (s SetOfSkills) areItemsUnique() bool {
 	var lastId string
 	for _, a := range s {
 		if lastId == a.ID {
@@ -946,7 +946,7 @@ func (s SetOfKnowledges) areItemsUnique() bool {
 	return true
 }
 
-func (s SetOfKnowledges) Slice(marker string, max uint32) []*Knowledge {
+func (s SetOfSkills) Slice(marker string, max uint32) []*Skill {
 	if max == 0 {
 		max = 1000
 	} else if max > 100000 {
@@ -965,7 +965,7 @@ func (s SetOfKnowledges) Slice(marker string, max uint32) []*Knowledge {
 	return s[start : uint32(start)+remaining]
 }
 
-func (s SetOfKnowledges) getIndex(id string) int {
+func (s SetOfSkills) getIndex(id string) int {
 	i := sort.Search(len(s), func(i int) bool {
 		return s[i].ID >= id
 	})
@@ -975,8 +975,8 @@ func (s SetOfKnowledges) getIndex(id string) int {
 	return -1
 }
 
-func (s SetOfKnowledges) Get(id string) *Knowledge {
-	var out *Knowledge
+func (s SetOfSkills) Get(id string) *Skill {
+	var out *Skill
 	idx := s.getIndex(id)
 	if idx >= 0 {
 		out = s[idx]
@@ -984,15 +984,15 @@ func (s SetOfKnowledges) Get(id string) *Knowledge {
 	return out
 }
 
-func (s SetOfKnowledges) Has(id string) bool {
+func (s SetOfSkills) Has(id string) bool {
 	return s.getIndex(id) >= 0
 }
 
-func (s *SetOfKnowledges) Remove(a *Knowledge) {
+func (s *SetOfSkills) Remove(a *Skill) {
 	s.RemovePK(a.ID)
 }
 
-func (s *SetOfKnowledges) RemovePK(pk string) {
+func (s *SetOfSkills) RemovePK(pk string) {
 	idx := s.getIndex(pk)
 	if idx >= 0 && idx < len(*s) {
 		if len(*s) == 1 {
@@ -1005,23 +1005,23 @@ func (s *SetOfKnowledges) RemovePK(pk string) {
 	}
 }
 
-type SetOfKnowledgeTypes []*KnowledgeType
+type SetOfSkillTypes []*SkillType
 
-func (s SetOfKnowledgeTypes) CheckThenFail() {
+func (s SetOfSkillTypes) CheckThenFail() {
 	if err := s.Check(); err != nil {
 		panic(err.Error())
 	}
 }
 
-func (s SetOfKnowledgeTypes) Len() int {
+func (s SetOfSkillTypes) Len() int {
 	return len(s)
 }
 
-func (s SetOfKnowledgeTypes) Swap(i, j int) {
+func (s SetOfSkillTypes) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
 }
 
-func (s *SetOfKnowledgeTypes) Add(a *KnowledgeType) {
+func (s *SetOfSkillTypes) Add(a *SkillType) {
 	*s = append(*s, a)
 	switch nb := len(*s); nb {
 	case 0:
@@ -1037,7 +1037,7 @@ func (s *SetOfKnowledgeTypes) Add(a *KnowledgeType) {
 	}
 }
 
-func (s SetOfKnowledgeTypes) Check() error {
+func (s SetOfSkillTypes) Check() error {
 	if !sort.IsSorted(s) {
 		return errors.NotValidf("sorting (%v) %v", s.Len(), s)
 	}
@@ -1047,7 +1047,7 @@ func (s SetOfKnowledgeTypes) Check() error {
 	return nil
 }
 
-func (s *SetOfKnowledgeTypes) testRandomVacuum() {
+func (s *SetOfSkillTypes) testRandomVacuum() {
 	for s.Len() > 0 {
 		idx := rand.Intn(s.Len())
 		s.Remove((*s)[idx])
@@ -1055,11 +1055,11 @@ func (s *SetOfKnowledgeTypes) testRandomVacuum() {
 	}
 }
 
-func (s SetOfKnowledgeTypes) Less(i, j int) bool {
+func (s SetOfSkillTypes) Less(i, j int) bool {
 	return s[i].ID < s[j].ID
 }
 
-func (s SetOfKnowledgeTypes) areItemsUnique() bool {
+func (s SetOfSkillTypes) areItemsUnique() bool {
 	var lastId string
 	for _, a := range s {
 		if lastId == a.ID {
@@ -1070,7 +1070,7 @@ func (s SetOfKnowledgeTypes) areItemsUnique() bool {
 	return true
 }
 
-func (s SetOfKnowledgeTypes) Slice(marker string, max uint32) []*KnowledgeType {
+func (s SetOfSkillTypes) Slice(marker string, max uint32) []*SkillType {
 	if max == 0 {
 		max = 1000
 	} else if max > 100000 {
@@ -1089,7 +1089,7 @@ func (s SetOfKnowledgeTypes) Slice(marker string, max uint32) []*KnowledgeType {
 	return s[start : uint32(start)+remaining]
 }
 
-func (s SetOfKnowledgeTypes) getIndex(id string) int {
+func (s SetOfSkillTypes) getIndex(id string) int {
 	i := sort.Search(len(s), func(i int) bool {
 		return s[i].ID >= id
 	})
@@ -1099,8 +1099,8 @@ func (s SetOfKnowledgeTypes) getIndex(id string) int {
 	return -1
 }
 
-func (s SetOfKnowledgeTypes) Get(id string) *KnowledgeType {
-	var out *KnowledgeType
+func (s SetOfSkillTypes) Get(id string) *SkillType {
+	var out *SkillType
 	idx := s.getIndex(id)
 	if idx >= 0 {
 		out = s[idx]
@@ -1108,15 +1108,15 @@ func (s SetOfKnowledgeTypes) Get(id string) *KnowledgeType {
 	return out
 }
 
-func (s SetOfKnowledgeTypes) Has(id string) bool {
+func (s SetOfSkillTypes) Has(id string) bool {
 	return s.getIndex(id) >= 0
 }
 
-func (s *SetOfKnowledgeTypes) Remove(a *KnowledgeType) {
+func (s *SetOfSkillTypes) Remove(a *SkillType) {
 	s.RemovePK(a.ID)
 }
 
-func (s *SetOfKnowledgeTypes) RemovePK(pk string) {
+func (s *SetOfSkillTypes) RemovePK(pk string) {
 	idx := s.getIndex(pk)
 	if idx >= 0 && idx < len(*s) {
 		if len(*s) == 1 {

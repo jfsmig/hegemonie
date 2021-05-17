@@ -14,13 +14,13 @@ import (
 
 func MakeCity() *City {
 	return &City{
-		ID:         0,
-		State:      CityStatePrivIdle,
-		Units:      make(SetOfUnits, 0),
-		Buildings:  make(SetOfBuildings, 0),
-		Knowledges: make(SetOfKnowledges, 0),
-		Armies:     make(SetOfArmies, 0),
-		lieges:     make(SetOfCities, 0),
+		ID:        0,
+		State:     CityStatePrivIdle,
+		Units:     make(SetOfUnits, 0),
+		Buildings: make(SetOfBuildings, 0),
+		Skills:    make(SetOfSkills, 0),
+		Armies:    make(SetOfArmies, 0),
+		lieges:    make(SetOfCities, 0),
 	}
 }
 
@@ -63,13 +63,13 @@ func (c *City) ApplyModel(model *City) {
 		c.Buildings.Add(x)
 	}
 
-	c.Knowledges = make(SetOfKnowledges, 0)
-	for _, x0 := range model.Knowledges {
-		x := new(Knowledge)
+	c.Skills = make(SetOfSkills, 0)
+	for _, x0 := range model.Skills {
+		x := new(Skill)
 		*x = *x0
 		x.ID = uuid.New().String()
 		x.Ticks = 0
-		c.Knowledges.Add(x)
+		c.Skills.Add(x)
 	}
 
 	c.Units = make(SetOfUnits, 0)
@@ -98,10 +98,10 @@ func (c *City) GetBuilding(id string) *Building {
 	return c.Buildings.Get(id)
 }
 
-// GetKnowledge returns a Knowledge owned by the current City, given the
-// Knowledge ID
-func (c *City) GetKnowledge(id string) *Knowledge {
-	return c.Knowledges.Get(id)
+// GetSkill returns a Skill owned by the current City, given the
+// Skill ID
+func (c *City) GetSkill(id string) *Skill {
+	return c.Skills.Get(id)
 }
 
 // GetLieges returns a list of all the Lieges of the current City.
@@ -136,9 +136,9 @@ func (c *City) ComputePopularity(r *Region) int64 {
 		pop += bt.PopBonus
 	}
 
-	// Add Transient values for Knowledges
-	for _, k := range c.Knowledges {
-		kt := w.KnowledgeTypeGet(k.Type)
+	// Add Transient values for Skills
+	for _, k := range c.Skills {
+		kt := w.SkillTypeGet(k.Type)
 		pop += kt.PopBonus
 	}
 
@@ -152,21 +152,21 @@ func (c *City) ComputeProduction(r *Region) *CityProduction {
 	w := r.GetWorld()
 	p := &CityProduction{
 		Buildings: ResourceModifierNoop(),
-		Knowledge: ResourceModifierNoop(),
+		Skill:     ResourceModifierNoop(),
 	}
 
 	for _, b := range c.Buildings {
 		t := w.BuildingTypeGet(b.Type)
 		p.Buildings.ComposeWith(t.Prod)
 	}
-	for _, u := range c.Knowledges {
-		t := w.KnowledgeTypeGet(u.Type)
-		p.Knowledge.ComposeWith(t.Prod)
+	for _, u := range c.Skills {
+		t := w.SkillTypeGet(u.Type)
+		p.Skill.ComposeWith(t.Prod)
 	}
 
 	p.Base = c.Production.Copy()
 	p.Actual = c.Production.Copy()
-	p.Actual.Apply(p.Buildings, p.Knowledge)
+	p.Actual.Apply(p.Buildings, p.Skill)
 	return p
 }
 
@@ -176,7 +176,7 @@ func (c *City) ComputeProduction(r *Region) *CityProduction {
 func (c *City) ComputeStock(r *Region) *CityStock {
 	p := &CityStock{
 		Buildings: ResourceModifierNoop(),
-		Knowledge: ResourceModifierNoop(),
+		Skill:     ResourceModifierNoop(),
 	}
 	w := r.GetWorld()
 
@@ -184,14 +184,14 @@ func (c *City) ComputeStock(r *Region) *CityStock {
 		t := w.BuildingTypeGet(b.Type)
 		p.Buildings.ComposeWith(t.Stock)
 	}
-	for _, b := range c.Knowledges {
+	for _, b := range c.Skills {
 		t := w.BuildingTypeGet(b.Type)
 		p.Buildings.ComposeWith(t.Stock)
 	}
 
 	p.Base = c.StockCapacity.Copy()
 	p.Actual = c.StockCapacity.Copy()
-	p.Actual.Apply(p.Buildings, p.Knowledge)
+	p.Actual.Apply(p.Buildings, p.Skill)
 	p.Usage = c.Stock.Copy()
 	return p
 }
@@ -206,7 +206,7 @@ func (c *City) ComputeStats(r *Region) CityStats {
 		StockCapacity:  stock.Actual,
 		StockUsage:     stock.Usage,
 		ScoreBuildings: uint64(c.Buildings.Len()),
-		ScoreKnowledge: uint64(c.Knowledges.Len()),
+		ScoreSkill:     uint64(c.Skills.Len()),
 		ScoreMilitary:  uint64(c.Armies.Len()),
 		Popularity:     popularity,
 	}
@@ -329,7 +329,7 @@ func (c *City) Produce(_ context.Context, w *Region) {
 
 	// ATM the stock maybe still stores resources. We use them to make the assets evolve.
 	// We arbitrarily give the preference to Troops, then Buildings and eventually the
-	// Knowledge.
+	// Skill.
 
 	for _, u := range c.Units {
 		if u.Ticks > 0 {
@@ -359,9 +359,9 @@ func (c *City) Produce(_ context.Context, w *Region) {
 		}
 	}
 
-	for _, k := range c.Knowledges {
+	for _, k := range c.Skills {
 		if k.Ticks > 0 {
-			bt := w.world.KnowledgeTypeGet(k.Type)
+			bt := w.world.SkillTypeGet(k.Type)
 			if c.Stock.GreaterOrEqualTo(bt.Cost) {
 				c.Stock.Remove(bt.Cost)
 				k.Ticks--
@@ -480,12 +480,12 @@ func (c *City) TransferOwnUnit(a *Army, units ...string) error {
 	return nil
 }
 
-func (c *City) KnowledgeFrontier(w *Region) []*KnowledgeType {
-	return w.GetWorld().KnowledgeGetFrontier(c.Knowledges)
+func (c *City) SkillFrontier(w *Region) []*SkillType {
+	return w.GetWorld().SkillGetFrontier(c.Skills)
 }
 
 func (c *City) BuildingFrontier(w *Region) []*BuildingType {
-	return w.GetWorld().BuildingGetFrontier(c.ComputePopularity(w), c.Buildings, c.Knowledges)
+	return w.GetWorld().BuildingGetFrontier(c.ComputePopularity(w), c.Buildings, c.Skills)
 }
 
 // Return a collection of UnitType that may be trained by the current City
@@ -509,10 +509,10 @@ func (c *City) UnitAllowed(t *UnitType) bool {
 	return false
 }
 
-func (c *City) ownedKnowledgeTypes(reg *Region) SetOfKnowledgeTypes {
-	out := make(SetOfKnowledgeTypes, 0)
-	for _, k := range c.Knowledges {
-		out.Add(reg.world.Definitions.Knowledges.Get(k.Type))
+func (c *City) ownedSkillTypes(reg *Region) SetOfSkillTypes {
+	out := make(SetOfSkillTypes, 0)
+	for _, k := range c.Skills {
+		out.Add(reg.world.Definitions.Skills.Get(k.Type))
 	}
 	return out
 }

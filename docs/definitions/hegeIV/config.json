@@ -5,25 +5,25 @@
 	"PopBonusArmyLive": 0,
 	"CityPatterns": [
 		{
-			"Buildings": [], "Units": [], "Knowledges": [],
+			"Buildings": [], "Units": [], "Skills": [],
 			"Stock": [3, 200, 100, 100, 100, 100],
 			"StockCapacity": [3, 20000, 1000, 1000, 1000, 1000],
 			"Production": [1, 100, 110, 90, 100, 100]
 		},
 		{
-			"Buildings": [], "Units": [], "Knowledges": [],
+			"Buildings": [], "Units": [], "Skills": [],
 			"Stock": [3, 200, 100, 100, 100, 100],
 			"StockCapacity": [3, 20000, 1000, 1000, 1000, 1000],
 			"Production": [1, 100, 90, 110, 100, 100]
 		},
 		{
-			"Buildings": [], "Units": [], "Knowledges": [],
+			"Buildings": [], "Units": [], "Skills": [],
 			"Stock": [3, 200, 100, 100, 100, 100],
 			"StockCapacity": [3, 20000, 1000, 1000, 1000, 1000],
 			"Production": [1, 100, 100, 100, 90, 110]
 		},
 		{
-			"Buildings": [], "Units": [], "Knowledges": [],
+			"Buildings": [], "Units": [], "Skills": [],
 			"Stock": [3, 200, 100, 100, 100, 100],
 			"StockCapacity": [3, 20000, 1000, 1000, 1000, 1000],
 			"Production": [3, 100, 100, 100, 110, 90]

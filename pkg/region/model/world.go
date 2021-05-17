@@ -32,9 +32,9 @@ func NewWorld() (*World, error) {
 		mapView:  &noopMapClient{},
 		Regions:  make(SetOfRegions, 0),
 		Definitions: DefinitionsBase{
-			Units:      make(SetOfUnitTypes, 0),
-			Buildings:  make(SetOfBuildingTypes, 0),
-			Knowledges: make(SetOfKnowledgeTypes, 0),
+			Units:     make(SetOfUnitTypes, 0),
+			Buildings: make(SetOfBuildingTypes, 0),
+			Skills:    make(SetOfSkillTypes, 0),
 		},
 	}, nil
 }
@@ -95,15 +95,15 @@ func (w *World) BuildingTypeGet(id string) *BuildingType {
 	return w.Definitions.Buildings.Get(id)
 }
 
-func (w *World) BuildingGetFrontier(pop int64, built []*Building, owned []*Knowledge) []*BuildingType {
+func (w *World) BuildingGetFrontier(pop int64, built []*Building, owned []*Skill) []*BuildingType {
 	// TODO(jfs): Maybe speed the execution with a reverse index of Requires
 	return w.Definitions.Buildings.Frontier(pop, built, owned)
 }
 
-func (w *World) KnowledgeTypeGet(id string) *KnowledgeType {
-	return w.Definitions.Knowledges.Get(id)
+func (w *World) SkillTypeGet(id string) *SkillType {
+	return w.Definitions.Skills.Get(id)
 }
 
-func (w *World) KnowledgeGetFrontier(owned []*Knowledge) []*KnowledgeType {
-	return w.Definitions.Knowledges.Frontier(owned)
+func (w *World) SkillGetFrontier(owned []*Skill) []*SkillType {
+	return w.Definitions.Skills.Frontier(owned)
 }

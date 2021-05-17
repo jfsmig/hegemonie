@@ -57,7 +57,7 @@ type EventArmy struct {
 	Action string `json:"action"`
 }
 
-type EventKnowledge struct {
+type EventSkill struct {
 	store *EventStore
 }
 
@@ -74,8 +74,8 @@ func (es *EventStore) Army(log *region.City) region.EventArmy {
 	}
 }
 
-func (es *EventStore) Knowledge(log *region.City) region.EventKnowledge {
-	return &EventKnowledge{store: es}
+func (es *EventStore) Skill(log *region.City) region.EventSkill {
+	return &EventSkill{store: es}
 }
 
 func (es *EventStore) Units(log *region.City) region.EventUnits {
@@ -116,17 +116,17 @@ func (evt *EventArmy) Send() {
 	})
 }
 
-func (evt *EventKnowledge) Item(c *region.City, kt *region.KnowledgeType) region.EventKnowledge {
+func (evt *EventSkill) Item(c *region.City, kt *region.SkillType) region.EventSkill {
 	// TODO FIXME
 	return evt
 }
 
-func (evt *EventKnowledge) Step(current, max uint64) region.EventKnowledge {
+func (evt *EventSkill) Step(current, max uint64) region.EventSkill {
 	// TODO FIXME
 	return evt
 }
 
-func (evt *EventKnowledge) Send() {
+func (evt *EventSkill) Send() {
 	// TODO FIXME
 }
 

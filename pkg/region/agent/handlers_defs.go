@@ -77,16 +77,16 @@ func (app *defsApp) ListBuildings(req *proto.PaginatedStrQuery, stream proto.Def
 	})
 }
 
-func (app *defsApp) ListKnowledges(req *proto.PaginatedStrQuery, stream proto.Definitions_ListKnowledgesServer) error {
+func (app *defsApp) ListSkills(req *proto.PaginatedStrQuery, stream proto.Definitions_ListSkillsServer) error {
 	return app.app._worldLock('r', func() error {
 		for last := req.GetMarker(); ; {
-			tab := app.app.w.Definitions.Knowledges.Slice(last, 100)
+			tab := app.app.w.Definitions.Skills.Slice(last, 100)
 			if len(tab) <= 0 {
 				return nil
 			}
 			for _, i := range tab {
 				last = i.ID
-				err := stream.Send(&proto.KnowledgeTypeView{
+				err := stream.Send(&proto.SkillTypeView{
 					Id: i.ID, Name: i.Name, Ticks: i.Ticks})
 				if err == io.EOF {
 					return nil

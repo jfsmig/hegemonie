@@ -73,7 +73,7 @@ func showProduction(r *region.Region, c *region.City) *proto.ProductionView {
 	prod := c.ComputeProduction(r)
 	v.Base = resAbsM2P(prod.Base)
 	v.Buildings = resModM2P(prod.Buildings)
-	v.Knowledge = resModM2P(prod.Knowledge)
+	v.Skill = resModM2P(prod.Skill)
 	v.Actual = resAbsM2P(prod.Actual)
 	return v
 }
@@ -83,7 +83,7 @@ func showStock(r *region.Region, c *region.City) *proto.StockView {
 	stock := c.ComputeStock(r)
 	v.Base = resAbsM2P(stock.Base)
 	v.Buildings = resModM2P(stock.Buildings)
-	v.Knowledge = resModM2P(stock.Knowledge)
+	v.Skill = resModM2P(stock.Skill)
 	v.Actual = resAbsM2P(stock.Actual)
 	v.Usage = resAbsM2P(stock.Usage)
 	return v
@@ -91,8 +91,8 @@ func showStock(r *region.Region, c *region.City) *proto.StockView {
 
 func showEvolution(r *region.Region, c *region.City) *proto.CityEvolution {
 	cv := &proto.CityEvolution{}
-	for _, kt := range c.KnowledgeFrontier(r) {
-		cv.KFrontier = append(cv.KFrontier, &proto.KnowledgeTypeView{
+	for _, kt := range c.SkillFrontier(r) {
+		cv.KFrontier = append(cv.KFrontier, &proto.SkillTypeView{
 			Id: kt.ID, Name: kt.Name,
 		})
 	}
@@ -112,8 +112,8 @@ func showEvolution(r *region.Region, c *region.City) *proto.CityEvolution {
 func showAssets(r *region.Region, c *region.City) *proto.CityAssets {
 	v := &proto.CityAssets{}
 
-	for _, k := range c.Knowledges {
-		v.Knowledges = append(v.Knowledges, &proto.KnowledgeView{
+	for _, k := range c.Skills {
+		v.Skills = append(v.Skills, &proto.SkillView{
 			Id: k.ID, IdType: k.Type, Ticks: uint32(k.Ticks),
 		})
 	}
@@ -248,11 +248,11 @@ func showCityStats(r *region.Region, c *region.City) *proto.CityStats {
 	stats := c.ComputeStats(r)
 	return &proto.CityStats{
 		// Gauges
-		StockUsage:     resAbsM2P(stats.StockUsage),
-		StockCapacity:  resAbsM2P(stats.StockCapacity),
-		ScoreArmy:      stats.ScoreMilitary,
-		ScoreBuilding:  stats.ScoreBuildings,
-		ScoreKnowledge: stats.ScoreKnowledge,
+		StockUsage:    resAbsM2P(stats.StockUsage),
+		StockCapacity: resAbsM2P(stats.StockCapacity),
+		ScoreArmy:     stats.ScoreMilitary,
+		ScoreBuilding: stats.ScoreBuildings,
+		ScoreSkill:    stats.ScoreSkill,
 		// Counters
 		ResourceProduced: resAbsM2P(stats.Activity.ResourceProduced),
 		ResourceReceived: resAbsM2P(stats.Activity.ResourceReceived),
@@ -281,7 +281,7 @@ func showCityTemplate(r *region.Region, c *region.City) *proto.CityTemplate {
 	for _, x := range c.Buildings {
 		rc.BuildingTypes = append(rc.BuildingTypes, x.Type)
 	}
-	for _, x := range c.Knowledges {
+	for _, x := range c.Skills {
 		rc.SkillTypes = append(rc.SkillTypes, x.Type)
 	}
 	for _, x := range c.Units {

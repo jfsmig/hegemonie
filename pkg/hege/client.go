@@ -362,7 +362,7 @@ func clientDefinitions(ctx context.Context) *cobra.Command {
 
 	skills := &cobra.Command{
 		Use:     "skills",
-		Aliases: []string{"s", "skill", "k", "knowledge"},
+		Aliases: []string{"s", "skill"},
 		Short:   "Get the available buildings",
 		Example: "hege client regions buildings $REGION_ID",
 		Args:    cobra.ExactArgs(1),

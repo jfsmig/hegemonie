@@ -135,7 +135,7 @@ func (app *adminApp) PushStats(ctx context.Context, req *proto.RegionId) (*proto
 				AddField("u_raised", s(stats.UnitRaised)).
 				AddField("u_lost", s(stats.UnitLost)).
 				AddField("a_score", s(stats.ScoreArmy)).
-				AddField("k_score", s(stats.ScoreKnowledge)).
+				AddField("k_score", s(stats.ScoreSkill)).
 				AddField("b_score", s(stats.ScoreBuilding)).
 				AddField("f_lost", s(stats.FightLost)).
 				AddField("f_won", s(stats.FightWon)).

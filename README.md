@@ -66,7 +66,7 @@ Follow the development on GitHub with the
 [hegemonie-rpg/engine](https://github.com/hegemonie-rpg/engine) project. A Facebook page
 also exists [Hegemonie.be](https://www.facebook.com/hegemonie.be).
 
-## Acknowledgements
+## Acskillments
 
 We welcome any volunteer and we already have a list of
 [amazing authors of Hegemonie](./AUTHORS.md).

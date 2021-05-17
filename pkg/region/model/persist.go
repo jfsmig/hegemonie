@@ -16,8 +16,8 @@ import (
 )
 
 func (defs *DefinitionsBase) Check() error {
-	if !sort.IsSorted(&defs.Knowledges) {
-		return errors.NotValidf("knowledge types unsorted")
+	if !sort.IsSorted(&defs.Skills) {
+		return errors.NotValidf("skill types unsorted")
 	}
 	if !sort.IsSorted(&defs.Buildings) {
 		return errors.NotValidf("building types unsorted")
@@ -58,14 +58,14 @@ func (defs *DefinitionsBase) loadUnits(basedir string) error {
 	})
 }
 
-func (defs *DefinitionsBase) loadKnowledge(basedir string) (err error) {
+func (defs *DefinitionsBase) loadSkill(basedir string) (err error) {
 	return walkJSON(basedir, func(path string, decoder *json.Decoder) error {
 		utils.Logger.Info().Str("kind", "skill").Str("path", path).Msg("loading")
-		tmp := make([]*KnowledgeType, 0)
+		tmp := make([]*SkillType, 0)
 		if err = decoder.Decode(&tmp); err != nil {
 			return errors.NewNotValid(err, "invalid json")
 		}
-		defs.Knowledges = append(defs.Knowledges, tmp...)
+		defs.Skills = append(defs.Skills, tmp...)
 		return nil
 	})
 }
@@ -85,14 +85,14 @@ func (defs *DefinitionsBase) loadBuildings(basedir string) (err error) {
 func (defs *DefinitionsBase) load(path string) (err error) {
 	err = defs.loadUnits(path + "/units")
 	if err == nil {
-		err = defs.loadKnowledge(path + "/knowledge")
+		err = defs.loadSkill(path + "/skill")
 	}
 	if err == nil {
 		err = defs.loadBuildings(path + "/buildings")
 	}
 
 	if err == nil {
-		sort.Sort(&defs.Knowledges)
+		sort.Sort(&defs.Skills)
 		sort.Sort(&defs.Buildings)
 		sort.Sort(&defs.Units)
 	}
@@ -134,8 +134,8 @@ func (reg *Region) Check() error {
 		}
 	}
 	for _, a := range reg.Cities {
-		if !sort.IsSorted(&a.Knowledges) {
-			return errors.NotValidf("knowledge unsorted")
+		if !sort.IsSorted(&a.Skills) {
+			return errors.NotValidf("skill unsorted")
 		}
 		if !sort.IsSorted(&a.Buildings) {
 			return errors.NotValidf("building unsorted")
@@ -165,7 +165,7 @@ func (reg *Region) PostLoad() error {
 	sort.Sort(&reg.Fights)
 
 	for _, c := range reg.Cities {
-		sort.Sort(&c.Knowledges)
+		sort.Sort(&c.Skills)
 		sort.Sort(&c.Buildings)
 		sort.Sort(&c.Units)
 		if c.Armies == nil {

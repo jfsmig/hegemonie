@@ -10,7 +10,7 @@ import (
 	"github.com/juju/errors"
 )
 
-func (s SetOfBuildingTypes) Frontier(pop int64, built []*Building, owned []*Knowledge) []*BuildingType {
+func (s SetOfBuildingTypes) Frontier(pop int64, built []*Building, owned []*Skill) []*BuildingType {
 	bmap := make(map[string]bool)
 	pending := make(map[string]bool)
 	finished := make(map[string]bool)
@@ -84,7 +84,7 @@ func (c *City) Build(w *Region, bID string) (string, error) {
 			}
 		}
 	}
-	if !CheckKnowledgeDependencies(c.ownedKnowledgeTypes(w), t.Requires, t.Conflicts) {
+	if !CheckSkillDependencies(c.ownedSkillTypes(w), t.Requires, t.Conflicts) {
 		return "", errors.Forbiddenf("dependencies unmet")
 	}
 	if !c.Stock.GreaterOrEqualTo(t.Cost0) {

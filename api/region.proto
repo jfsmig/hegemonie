@@ -65,8 +65,8 @@ service Definitions {
   // Return (a page of) a list of all the Buildings that are possible in the world
   rpc ListBuildings (PaginatedStrQuery) returns (stream BuildingTypeView) {}
 
-  // Return (a page of) a list of all the Knowledge that are possible in the world
-  rpc ListKnowledges (PaginatedStrQuery) returns (stream KnowledgeTypeView) {}
+  // Return (a page of) a list of all the Skill that are possible in the world
+  rpc ListSkills (PaginatedStrQuery) returns (stream SkillTypeView) {}
 }
 
 // Restricted to registered users
@@ -88,7 +88,7 @@ service City {
   //            to be replied.
   rpc ShowAll (CityId) returns (CityView) {}
 
-  // Start the study of a knowledge whose type is specified by its unique ID.
+  // Start the study of a skill whose type is specified by its unique ID.
   // If the conditions are not met, an error is returned.
   rpc Study (StudyReq) returns (None) {}
 
@@ -232,7 +232,7 @@ message ResourcesMod {
 
 message StockView {
   ResourcesAbs base = 1;
-  ResourcesMod knowledge = 2;
+  ResourcesMod skill = 2;
   ResourcesMod buildings = 3;
   ResourcesMod troops = 4;
   ResourcesAbs actual = 5;
@@ -242,7 +242,7 @@ message StockView {
 
 message ProductionView {
   ResourcesAbs base = 1;
-  ResourcesMod knowledge = 2;
+  ResourcesMod skill = 2;
   ResourcesMod buildings = 3;
   ResourcesMod troops = 4;
   ResourcesAbs actual = 5;
@@ -307,14 +307,14 @@ message BuildingView {
 
 
 
-message KnowledgeTypeView {
+message SkillTypeView {
   string id = 1;
   string name = 2;
   uint32 ticks = 3;
 }
 
-message KnowledgeView {
-  KnowledgeTypeView type = 1;
+message SkillView {
+  SkillTypeView type = 1;
   string id = 2;
   string idType = 3;
   uint32 ticks = 4;
@@ -359,7 +359,7 @@ message CityStats {
   ResourcesAbs stockCapacity = 1;
   ResourcesAbs stockUsage = 2;
   uint64 scoreBuilding = 3;
-  uint64 scoreKnowledge = 4;
+  uint64 scoreSkill = 4;
   uint64 scoreArmy = 5;
   int64 popularity = 6;
   // Counters
@@ -378,7 +378,7 @@ message CityStats {
 }
 
 message CityEvolution {
-  repeated KnowledgeTypeView kFrontier = 1;
+  repeated SkillTypeView kFrontier = 1;
   repeated BuildingTypeRef bFrontier = 2;
   repeated UnitTypeView uFrontier = 3;
 }
@@ -386,7 +386,7 @@ message CityEvolution {
 message CityAssets {
   repeated UnitView units = 1;
   repeated BuildingView buildings = 2;
-  repeated KnowledgeView knowledges = 3;
+  repeated SkillView skills = 3;
   repeated ArmyView armies = 4;
 }
 
@@ -452,7 +452,7 @@ message LifecycleAssignReq {
 
 message StudyReq {
   CityId city = 1;
-  string knowledgeType = 2;
+  string skillType = 2;
 }
 
 message TrainReq {

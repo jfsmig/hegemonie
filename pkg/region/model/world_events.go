@@ -13,8 +13,8 @@ import (
 type Notifier interface {
 	// Prepare a notification context to inform :to: of the movement of the army :a:.
 	Army(log *City) EventArmy
-	// Prepare a notification context to inform :to: of the evolution of the knowledge of someone.
-	Knowledge(log *City) EventKnowledge
+	// Prepare a notification context to inform :to: of the evolution of the skill of someone.
+	Skill(log *City) EventSkill
 	// Prepare a notification context to inform :to: of someone hiring troops
 	Units(log *City) EventUnits
 }
@@ -28,13 +28,13 @@ type EventArmy interface {
 	Send()
 }
 
-// EventKnowledge defines the builder of an event that informs about the progression of a knowledge
-type EventKnowledge interface {
-	// Item collects the City 'who' which progresses in the learning of the Knowledge 'k'
-	Item(who *City, k *KnowledgeType) EventKnowledge
+// EventSkill defines the builder of an event that informs about the progression of a skill
+type EventSkill interface {
+	// Item collects the City 'who' which progresses in the learning of the Skill 'k'
+	Item(who *City, k *SkillType) EventSkill
 
-	// Step collects about the progression in the earning of the Knowledge referenced by Item
-	Step(current, max uint64) EventKnowledge
+	// Step collects about the progression in the earning of the Skill referenced by Item
+	Step(current, max uint64) EventSkill
 
 	// Send emits the event to the collector.
 	Send()
@@ -48,21 +48,21 @@ type EventUnits interface {
 
 type noEvt struct{}
 type noEvtArmy struct{}
-type noEvtKnowledge struct{}
+type noEvtSkill struct{}
 type noEvtUnits struct{}
 
-func (n *noEvt) Army(to *City) EventArmy           { return &noEvtArmy{} }
-func (n *noEvt) Knowledge(to *City) EventKnowledge { return &noEvtKnowledge{} }
-func (n *noEvt) Units(to *City) EventUnits         { return &noEvtUnits{} }
+func (n *noEvt) Army(to *City) EventArmy   { return &noEvtArmy{} }
+func (n *noEvt) Skill(to *City) EventSkill { return &noEvtSkill{} }
+func (n *noEvt) Units(to *City) EventUnits { return &noEvtUnits{} }
 
 func (ctx *noEvtArmy) Item(a *Army) EventArmy            { return ctx }
 func (ctx *noEvtArmy) Move(src, dst uint64) EventArmy    { return ctx }
 func (ctx *noEvtArmy) NoRoute(src, dst uint64) EventArmy { return ctx }
 func (ctx *noEvtArmy) Send()                             {}
 
-func (ctx *noEvtKnowledge) Item(c *City, k *KnowledgeType) EventKnowledge { return ctx }
-func (ctx *noEvtKnowledge) Step(current, max uint64) EventKnowledge       { return ctx }
-func (ctx *noEvtKnowledge) Send()                                         {}
+func (ctx *noEvtSkill) Item(c *City, k *SkillType) EventSkill { return ctx }
+func (ctx *noEvtSkill) Step(current, max uint64) EventSkill   { return ctx }
+func (ctx *noEvtSkill) Send()                                 {}
 
 func (ctx *noEvtUnits) Item(c *City, k *UnitType) EventUnits { return ctx }
 func (ctx *noEvtUnits) Step(current, max uint64) EventUnits  { return ctx }
@@ -81,9 +81,9 @@ type logEvtArmy struct {
 	sub EventArmy
 }
 
-type logEvtKnowledge struct {
+type logEvtSkill struct {
 	log *zerolog.Event
-	sub EventKnowledge
+	sub EventSkill
 }
 
 type logEvtUnits struct {
@@ -101,8 +101,8 @@ func (n *eventLogger) Army(to *City) EventArmy {
 	return &logEvtArmy{log: logger(to), sub: n.sub.Army(to)}
 }
 
-func (n *eventLogger) Knowledge(to *City) EventKnowledge {
-	return &logEvtKnowledge{log: logger(to), sub: n.sub.Knowledge(to)}
+func (n *eventLogger) Skill(to *City) EventSkill {
+	return &logEvtSkill{log: logger(to), sub: n.sub.Skill(to)}
 }
 
 func (n *eventLogger) Units(to *City) EventUnits {
@@ -132,19 +132,19 @@ func (evt *logEvtArmy) Send() {
 	evt.log.Send()
 }
 
-func (evt *logEvtKnowledge) Item(c *City, k *KnowledgeType) EventKnowledge {
+func (evt *logEvtSkill) Item(c *City, k *SkillType) EventSkill {
 	evt.sub.Item(c, k)
 	evt.log.Uint64("city", c.ID).Str("id", k.ID)
 	return evt
 }
 
-func (evt *logEvtKnowledge) Step(current, max uint64) EventKnowledge {
+func (evt *logEvtSkill) Step(current, max uint64) EventSkill {
 	evt.sub.Step(current, max)
 	evt.log.Uint64("cur", current).Uint64("max", max)
 	return evt
 }
 
-func (evt *logEvtKnowledge) Send() {
+func (evt *logEvtSkill) Send() {
 	evt.sub.Send()
 	evt.log.Send()
 }

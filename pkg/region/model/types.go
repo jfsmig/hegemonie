@@ -116,9 +116,9 @@ type DefinitionsBase struct {
 	// All the possible Buildings that can be spanwed in Cities of the current World
 	// IMMUTABLE: Only read accesses allowed.
 	Buildings SetOfBuildingTypes
-	// All the possible Knowledge that can be learned in Cities of the current World
+	// All the possible Skill that can be learned in Cities of the current World
 	// IMMUTABLE: Only read accesses allowed.
-	Knowledges SetOfKnowledgeTypes
+	Skills SetOfSkillTypes
 }
 
 type Region struct {
@@ -164,14 +164,14 @@ type ResourceModifiers struct {
 
 type CityProduction struct {
 	Base      Resources
-	Knowledge ResourceModifiers
+	Skill     ResourceModifiers
 	Buildings ResourceModifiers
 	Actual    Resources
 }
 
 type CityStock struct {
 	Base      Resources
-	Knowledge ResourceModifiers
+	Skill     ResourceModifiers
 	Buildings ResourceModifiers
 	Actual    Resources
 
@@ -208,7 +208,7 @@ type CityStats struct {
 	// A measure of the City's evolution, only the building aspects
 	ScoreBuildings uint64
 	// A measure of the City's evolution, only the skills aspects
-	ScoreKnowledge uint64
+	ScoreSkill uint64
 	// A measure of the City's evolution, only the military aspects
 	ScoreMilitary uint64
 
@@ -289,7 +289,7 @@ type City struct {
 	// Production Boosts ans Production Multipliers
 	Production Resources
 
-	Knowledges SetOfKnowledges
+	Skills SetOfSkills
 
 	Buildings SetOfBuildings
 
@@ -314,21 +314,21 @@ type City struct {
 	lieges SetOfCities
 }
 
-type KnowledgeType struct {
+type SkillType struct {
 	ID    string `json:"Id"`
 	Name  string `json:"Name"`
 	Ticks uint32 `json:",omitempty"`
 
-	// Transient bonus of Popularity, when the Knowledge is present
+	// Transient bonus of Popularity, when the Skill is present
 	PopBonus int64
 
-	// Permanent bonus of Popularity when the Knowledge is achieved
+	// Permanent bonus of Popularity when the Skill is achieved
 	PopBonusLearn int64
 
-	// Permanent bonus of Popularity (to the owner) when the Knowledge is stolen
+	// Permanent bonus of Popularity (to the owner) when the Skill is stolen
 	PopBonusStealVictim int64
 
-	// Permanent bonus of Popularity (to the robber) when the Knowledge is stolen
+	// Permanent bonus of Popularity (to the robber) when the Skill is stolen
 	PopBonusStealActor int64
 
 	// Impact of the current Building on the total storage capacity of the City.
@@ -337,21 +337,21 @@ type KnowledgeType struct {
 	// Increment of resources produced by this building.
 	Prod ResourceModifiers
 
-	// Amount of resources spent when the City starts learning this knowledge
+	// Amount of resources spent when the City starts learning this skill
 	Cost0 Resources
 
 	// Amount of resources spent to advance of one tick
 	Cost Resources
 
-	// All the knowledges that are required to start the current Knowledge
+	// All the skills that are required to start the current Skill
 	// (this is an AND, not an OR)
 	Requires []string
 
-	// All the knowledge that are forbidden by the current knowledge
+	// All the skill that are forbidden by the current skill
 	Conflicts []string
 }
 
-type Knowledge struct {
+type Skill struct {
 	ID    string `json:"Id"`
 	Type  string
 	Ticks uint32 `json:"Ticks,omitempty"`
@@ -400,11 +400,11 @@ type BuildingType struct {
 	// Increment of resources produced by this building.
 	Prod ResourceModifiers
 
-	// A set of KnowledgeType ID that must all be present in a City to let that City start
+	// A set of SkillType ID that must all be present in a City to let that City start
 	// this kind of building.
 	Requires []string
 
-	// A set of KnowledgeType ID that must all be absent in a City to let that City start
+	// A set of SkillType ID that must all be absent in a City to let that City start
 	// this kind of building.
 	Conflicts []string
 }
@@ -592,8 +592,8 @@ type SetOfFights []*Fight
 //go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./world_auto.go region:SetOfCities:*City
 //go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./world_auto.go region:SetOfTemplates:*City Name:string
 //go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./world_auto.go region:SetOfId:uint64 :uint64
-//go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./world_auto.go region:SetOfKnowledges:*Knowledge ID:string
-//go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./world_auto.go region:SetOfKnowledgeTypes:*KnowledgeType ID:string
+//go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./world_auto.go region:SetOfSkills:*Skill ID:string
+//go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./world_auto.go region:SetOfSkillTypes:*SkillType ID:string
 //go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./world_auto.go region:SetOfUnits:*Unit ID:string
 //go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./world_auto.go region:SetOfUnitTypes:*UnitType ID:string
 //go:generate go run github.com/hegemonie-rpg/engine/pkg/gen-set ./world_auto.go region:SetOfRegions:*Region Name:string

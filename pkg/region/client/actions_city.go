@@ -52,8 +52,8 @@ func (cli *ClientCLI) DoCityStudy(ctx context.Context, regID, cityStrID, sStrID 
 
 	return cli.connect(ctx, func(ctx context.Context, cnx *grpc.ClientConn) error {
 		inArgs := proto.StudyReq{
-			City:          &proto.CityId{Region: regID, City: cityID},
-			KnowledgeType: sStrID,
+			City:      &proto.CityId{Region: regID, City: cityID},
+			SkillType: sStrID,
 		}
 		_, err = proto.NewCityClient(cnx).Study(ctx, &inArgs)
 		if err != nil {

@@ -34,12 +34,12 @@ type _cityConstants struct {
 
 type _cityStats struct {
 	// Gauges
-	StockCapacity  _resourcesAbs `json:"stockCapacity"`
-	StockUsage     _resourcesAbs `json:"stockUsage"`
-	ScoreBuilding  uint64        `json:"scoreBuilding"`
-	ScoreKnowledge uint64        `json:"scoreKnowledge"`
-	ScoreArmy      uint64        `json:"scoreArmy"`
-	Popularity     int64         `json:"popularity"`
+	StockCapacity _resourcesAbs `json:"stockCapacity"`
+	StockUsage    _resourcesAbs `json:"stockUsage"`
+	ScoreBuilding uint64        `json:"scoreBuilding"`
+	ScoreSkill    uint64        `json:"scoreSkill"`
+	ScoreArmy     uint64        `json:"scoreArmy"`
+	Popularity    int64         `json:"popularity"`
 	// Counters
 	ResourceProduced _resourcesAbs `json:"resourceProduced"`
 	ResourceSent     _resourcesAbs `json:"resourceSent"`
@@ -252,7 +252,7 @@ func (t *_buildingView) importFrom(in *proto.BuildingView) *_buildingView {
 	return t
 }
 
-func (t *_skillView) importFrom(in *proto.KnowledgeView) *_skillView {
+func (t *_skillView) importFrom(in *proto.SkillView) *_skillView {
 	if in != nil {
 		t.ID = in.Id
 		t.TypeID = in.IdType
@@ -290,7 +290,7 @@ func (t *_buildingTypeView) importFrom(in *proto.BuildingTypeRef) *_buildingType
 	return t
 }
 
-func (t *_skillTypeView) importFrom(in *proto.KnowledgeTypeView) *_skillTypeView {
+func (t *_skillTypeView) importFrom(in *proto.SkillTypeView) *_skillTypeView {
 	if in != nil {
 		t.ID = in.Id
 		t.Name = in.Name
@@ -374,7 +374,7 @@ func (t *_resourcesModifiers) importFrom(in *proto.ResourcesMod) *_resourcesModi
 func (t *_cityStock) importFrom(in *proto.StockView) *_cityStock {
 	if in != nil {
 		t.Base.importFrom(in.Base)
-		t.Skills.importFrom(in.Knowledge)
+		t.Skills.importFrom(in.Skill)
 		t.Buildings.importFrom(in.Buildings)
 		t.Troops.importFrom(in.Troops)
 		t.Actual.importFrom(in.Actual)
@@ -386,7 +386,7 @@ func (t *_cityStock) importFrom(in *proto.StockView) *_cityStock {
 func (t *_cityProduction) importFrom(in *proto.ProductionView) *_cityProduction {
 	if in != nil {
 		t.Base.importFrom(in.Base)
-		t.Skills.importFrom(in.Knowledge)
+		t.Skills.importFrom(in.Skill)
 		t.Buildings.importFrom(in.Buildings)
 		t.Troops.importFrom(in.Troops)
 		t.Actual.importFrom(in.Actual)
@@ -404,7 +404,7 @@ func (t *_cityAssets) importFrom(in *proto.CityAssets) *_cityAssets {
 		}
 
 		t.Skills = make([]_skillView, 0)
-		for _, x := range in.Knowledges {
+		for _, x := range in.Skills {
 			var v _skillView
 			v.importFrom(x)
 			t.Skills = append(t.Skills, v)
@@ -459,7 +459,7 @@ func (t *_cityStats) importFrom(in *proto.CityStats) *_cityStats {
 		t.StockUsage.importFrom(in.StockUsage)
 
 		t.ScoreBuilding = in.ScoreBuilding
-		t.ScoreKnowledge = in.ScoreKnowledge
+		t.ScoreSkill = in.ScoreSkill
 		t.ScoreArmy = in.ScoreArmy
 		t.Popularity = in.Popularity
 

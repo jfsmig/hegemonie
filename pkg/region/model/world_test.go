@@ -25,29 +25,29 @@ func (r *localFullMeshMap) Step(ctx context.Context, mapName string, src, dst ui
 
 func definitionSandbox() DefinitionsBase {
 	db := DefinitionsBase{}
-	db.Knowledges.Add(&KnowledgeType{
-		ID: 1, Name: uuid.New().String(), Ticks: 1,
+	db.Skills.Add(&SkillType{
+		ID: "1", Name: uuid.New().String(), Ticks: 1,
 		Cost0: ResourcesUniform(0),
 		Cost:  ResourcesUniform(0),
 		Prod:  ResourceModifierNoop(),
 		Stock: ResourceModifierNoop(),
 	})
 	db.Buildings.Add(&BuildingType{
-		ID: 1, Name: uuid.New().String(), Ticks: 1,
+		ID: "1", Name: uuid.New().String(), Ticks: 1,
 		Cost0:    ResourcesUniform(0),
 		Cost:     ResourcesUniform(0),
 		Prod:     ResourceModifierUniform(1.0, 1.0),
 		Stock:    ResourceModifierNoop(),
-		Requires: []uint64{1},
+		Requires: []string{"1"},
 	})
 	db.Units.Add(&UnitType{
-		ID: 1, Name: uuid.New().String(), Ticks: 1,
+		ID: "1", Name: uuid.New().String(), Ticks: 1,
 		Cost0:            ResourcesUniform(0),
 		Cost:             ResourcesUniform(0),
 		Prod:             ResourceModifierNoop(),
 		Health:           100,
 		HealthFactor:     1.0,
-		RequiredBuilding: 1,
+		RequiredBuilding: "1",
 	})
 	return db
 }

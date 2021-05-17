@@ -30,7 +30,7 @@ func TestCityProductionNoModifier(t *testing.T) {
 		city.Production.SetValue(1)
 
 		expectedProd := ResourcesUniform(1)
-		prod := city.ComputeProduction(r.world)
+		prod := city.ComputeProduction(r)
 		if !prod.Actual.Equals(expectedProd) {
 			t.Fatal("unexpected stock, got", utils.JSON2Str(prod), "expected", utils.JSON2Str(expectedProd))
 		}
@@ -57,7 +57,7 @@ func TestCityProductionWithModifier(t *testing.T) {
 		b.Ticks = 0
 
 		expectedProd := ResourcesUniform(2)
-		prod := city.ComputeProduction(r.world)
+		prod := city.ComputeProduction(r)
 		if !prod.Actual.Equals(expectedProd) {
 			t.Fatal("unexpected production, got", utils.JSON2Str(prod), "expected", utils.JSON2Str(expectedProd))
 		}

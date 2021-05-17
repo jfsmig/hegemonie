@@ -25,7 +25,7 @@ func (cli *ClientCLI) DoRegionGetBuildings(ctx context.Context, reg string) erro
 
 func (cli *ClientCLI) DoRegionGetSkills(ctx context.Context, reg string) error {
 	return cli.connect(ctx, func(ctx context.Context, cnx *grpc.ClientConn) error {
-		out, err := proto.NewDefinitionsClient(cnx).ListKnowledges(ctx, &proto.PaginatedStrQuery{})
+		out, err := proto.NewDefinitionsClient(cnx).ListSkills(ctx, &proto.PaginatedStrQuery{})
 		if err != nil {
 			return errors.Trace(err)
 		}

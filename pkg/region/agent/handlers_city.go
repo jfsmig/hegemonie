@@ -57,7 +57,7 @@ func (s *cityApp) ShowAll(ctx context.Context, req *proto.CityId) (reply *proto.
 
 func (s *cityApp) Study(ctx context.Context, req *proto.StudyReq) (*proto.None, error) {
 	return none, s.app.cityLock('w', req.City, func(r *region.Region, c *region.City) error {
-		_, e := c.Study(r, req.KnowledgeType)
+		_, e := c.Study(r, req.SkillType)
 		return e
 	})
 }

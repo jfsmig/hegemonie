@@ -11,7 +11,7 @@ import (
 )
 
 // TODO(jfs): Maybe speed the execution with a reverse index of Requires
-func (s SetOfKnowledgeTypes) Frontier(owned []*Knowledge) []*KnowledgeType {
+func (s SetOfSkillTypes) Frontier(owned []*Skill) []*SkillType {
 	pending := make(map[string]bool)
 	finished := make(map[string]bool)
 	for _, k := range owned {
@@ -22,7 +22,7 @@ func (s SetOfKnowledgeTypes) Frontier(owned []*Knowledge) []*KnowledgeType {
 		}
 	}
 
-	valid := func(kt *KnowledgeType) bool {
+	valid := func(kt *SkillType) bool {
 		if finished[kt.ID] || pending[kt.ID] {
 			return false
 		}
@@ -39,7 +39,7 @@ func (s SetOfKnowledgeTypes) Frontier(owned []*Knowledge) []*KnowledgeType {
 		return true
 	}
 
-	result := make([]*KnowledgeType, 0)
+	result := make([]*SkillType, 0)
 	for _, kt := range s {
 		if valid(kt) {
 			result = append(result, kt)
@@ -48,7 +48,7 @@ func (s SetOfKnowledgeTypes) Frontier(owned []*Knowledge) []*KnowledgeType {
 	return result
 }
 
-func CheckKnowledgeDependencies(owned SetOfKnowledgeTypes, required, forbidden []string) bool {
+func CheckSkillDependencies(owned SetOfSkillTypes, required, forbidden []string) bool {
 	for _, k := range forbidden {
 		if owned.Has(k) {
 			return false
@@ -64,30 +64,30 @@ func CheckKnowledgeDependencies(owned SetOfKnowledgeTypes, required, forbidden [
 
 // Finish abruptly terminates the study of the Skill.
 // The number of study ticks suddenly drop to 0, whatever its prior value.
-func (k *Knowledge) Finish() *Knowledge {
+func (k *Skill) Finish() *Skill {
 	k.Ticks = 0
 	return k
 }
 
 // StartStudy declares a new Skill with the given type and the tick  sgauge at its max
-func (c *City) StartStudy(pType *KnowledgeType) *Knowledge {
+func (c *City) StartStudy(pType *SkillType) *Skill {
 	id := uuid.New().String()
-	k := &Knowledge{ID: id, Type: pType.ID, Ticks: pType.Ticks}
-	c.Knowledges.Add(k)
+	k := &Skill{ID: id, Type: pType.ID, Ticks: pType.Ticks}
+	c.Skills.Add(k)
 	return k
 }
 
 func (c *City) Study(w *Region, typeID string) (string, error) {
-	t := w.world.KnowledgeTypeGet(typeID)
+	t := w.world.SkillTypeGet(typeID)
 	if t == nil {
-		return "", errors.NotFoundf("knowledge type not found")
+		return "", errors.NotFoundf("skill type not found")
 	}
-	for _, k := range c.Knowledges {
+	for _, k := range c.Skills {
 		if typeID == k.Type {
 			return "", errors.AlreadyExistsf("already started")
 		}
 	}
-	if !CheckKnowledgeDependencies(c.ownedKnowledgeTypes(w), t.Requires, t.Conflicts) {
+	if !CheckSkillDependencies(c.ownedSkillTypes(w), t.Requires, t.Conflicts) {
 		return "", errors.Forbiddenf("dependencies unmet")
 	}
 
@@ -97,11 +97,11 @@ func (c *City) Study(w *Region, typeID string) (string, error) {
 }
 
 func (c *City) InstantStudy(w *Region, typeID string) error {
-	t := w.world.KnowledgeTypeGet(typeID)
+	t := w.world.SkillTypeGet(typeID)
 	if t == nil {
-		return errors.NotFoundf("knowledge type not found")
+		return errors.NotFoundf("skill type not found")
 	}
-	for _, k := range c.Knowledges {
+	for _, k := range c.Skills {
 		if typeID == k.Type {
 			return nil
 		}

@@ -9,13 +9,13 @@ description of the game will sound familiar to RPG players:
   
 * Each **character** manages cities
   
-* Each **city** produces **resources**, grows a **knowledge** tree, evolves
+* Each **city** produces **resources**, grows a **skills** tree, evolves
   with **building**, trains **troops**, controls **armies**, holds
   **artifacts**.
   
-* Each **knowledge** brings some modifiers to the behavior of the city owning
+* Each **skill** brings some modifiers to the behavior of the city owning
   it, like altering of the production of resources on the city, allowing or
-  forbidding other knowlegdes.
+  forbidding other skills.
   
 * Each **building** might also have an impact on the resource storage and
   production, but it can also

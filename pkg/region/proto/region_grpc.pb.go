@@ -996,8 +996,8 @@ type DefinitionsClient interface {
 	ListUnits(ctx context.Context, in *PaginatedStrQuery, opts ...grpc.CallOption) (Definitions_ListUnitsClient, error)
 	// Return (a page of) a list of all the Buildings that are possible in the world
 	ListBuildings(ctx context.Context, in *PaginatedStrQuery, opts ...grpc.CallOption) (Definitions_ListBuildingsClient, error)
-	// Return (a page of) a list of all the Knowledge that are possible in the world
-	ListKnowledges(ctx context.Context, in *PaginatedStrQuery, opts ...grpc.CallOption) (Definitions_ListKnowledgesClient, error)
+	// Return (a page of) a list of all the Skill that are possible in the world
+	ListSkills(ctx context.Context, in *PaginatedStrQuery, opts ...grpc.CallOption) (Definitions_ListSkillsClient, error)
 }
 
 type definitionsClient struct {
@@ -1072,12 +1072,12 @@ func (x *definitionsListBuildingsClient) Recv() (*BuildingTypeView, error) {
 	return m, nil
 }
 
-func (c *definitionsClient) ListKnowledges(ctx context.Context, in *PaginatedStrQuery, opts ...grpc.CallOption) (Definitions_ListKnowledgesClient, error) {
-	stream, err := c.cc.NewStream(ctx, &Definitions_ServiceDesc.Streams[2], "/hege.reg.Definitions/ListKnowledges", opts...)
+func (c *definitionsClient) ListSkills(ctx context.Context, in *PaginatedStrQuery, opts ...grpc.CallOption) (Definitions_ListSkillsClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Definitions_ServiceDesc.Streams[2], "/hege.reg.Definitions/ListSkills", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &definitionsListKnowledgesClient{stream}
+	x := &definitionsListSkillsClient{stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -1087,17 +1087,17 @@ func (c *definitionsClient) ListKnowledges(ctx context.Context, in *PaginatedStr
 	return x, nil
 }
 
-type Definitions_ListKnowledgesClient interface {
-	Recv() (*KnowledgeTypeView, error)
+type Definitions_ListSkillsClient interface {
+	Recv() (*SkillTypeView, error)
 	grpc.ClientStream
 }
 
-type definitionsListKnowledgesClient struct {
+type definitionsListSkillsClient struct {
 	grpc.ClientStream
 }
 
-func (x *definitionsListKnowledgesClient) Recv() (*KnowledgeTypeView, error) {
-	m := new(KnowledgeTypeView)
+func (x *definitionsListSkillsClient) Recv() (*SkillTypeView, error) {
+	m := new(SkillTypeView)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -1112,8 +1112,8 @@ type DefinitionsServer interface {
 	ListUnits(*PaginatedStrQuery, Definitions_ListUnitsServer) error
 	// Return (a page of) a list of all the Buildings that are possible in the world
 	ListBuildings(*PaginatedStrQuery, Definitions_ListBuildingsServer) error
-	// Return (a page of) a list of all the Knowledge that are possible in the world
-	ListKnowledges(*PaginatedStrQuery, Definitions_ListKnowledgesServer) error
+	// Return (a page of) a list of all the Skill that are possible in the world
+	ListSkills(*PaginatedStrQuery, Definitions_ListSkillsServer) error
 	mustEmbedUnimplementedDefinitionsServer()
 }
 
@@ -1127,8 +1127,8 @@ func (UnimplementedDefinitionsServer) ListUnits(*PaginatedStrQuery, Definitions_
 func (UnimplementedDefinitionsServer) ListBuildings(*PaginatedStrQuery, Definitions_ListBuildingsServer) error {
 	return status.Errorf(codes.Unimplemented, "method ListBuildings not implemented")
 }
-func (UnimplementedDefinitionsServer) ListKnowledges(*PaginatedStrQuery, Definitions_ListKnowledgesServer) error {
-	return status.Errorf(codes.Unimplemented, "method ListKnowledges not implemented")
+func (UnimplementedDefinitionsServer) ListSkills(*PaginatedStrQuery, Definitions_ListSkillsServer) error {
+	return status.Errorf(codes.Unimplemented, "method ListSkills not implemented")
 }
 func (UnimplementedDefinitionsServer) mustEmbedUnimplementedDefinitionsServer() {}
 
@@ -1185,24 +1185,24 @@ func (x *definitionsListBuildingsServer) Send(m *BuildingTypeView) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func _Definitions_ListKnowledges_Handler(srv interface{}, stream grpc.ServerStream) error {
+func _Definitions_ListSkills_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(PaginatedStrQuery)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(DefinitionsServer).ListKnowledges(m, &definitionsListKnowledgesServer{stream})
+	return srv.(DefinitionsServer).ListSkills(m, &definitionsListSkillsServer{stream})
 }
 
-type Definitions_ListKnowledgesServer interface {
-	Send(*KnowledgeTypeView) error
+type Definitions_ListSkillsServer interface {
+	Send(*SkillTypeView) error
 	grpc.ServerStream
 }
 
-type definitionsListKnowledgesServer struct {
+type definitionsListSkillsServer struct {
 	grpc.ServerStream
 }
 
-func (x *definitionsListKnowledgesServer) Send(m *KnowledgeTypeView) error {
+func (x *definitionsListSkillsServer) Send(m *SkillTypeView) error {
 	return x.ServerStream.SendMsg(m)
 }
 
@@ -1225,8 +1225,8 @@ var Definitions_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 		{
-			StreamName:    "ListKnowledges",
-			Handler:       _Definitions_ListKnowledges_Handler,
+			StreamName:    "ListSkills",
+			Handler:       _Definitions_ListSkills_Handler,
 			ServerStreams: true,
 		},
 	},
@@ -1438,7 +1438,7 @@ type CityClient interface {
 	// TODO(jfs): the request might fail because of a too large object
 	//            to be replied.
 	ShowAll(ctx context.Context, in *CityId, opts ...grpc.CallOption) (*CityView, error)
-	// Start the study of a knowledge whose type is specified by its unique ID.
+	// Start the study of a skill whose type is specified by its unique ID.
 	// If the conditions are not met, an error is returned.
 	Study(ctx context.Context, in *StudyReq, opts ...grpc.CallOption) (*None, error)
 	// Start the construction of a building whose type is specified by its unique ID.
@@ -1619,7 +1619,7 @@ type CityServer interface {
 	// TODO(jfs): the request might fail because of a too large object
 	//            to be replied.
 	ShowAll(context.Context, *CityId) (*CityView, error)
-	// Start the study of a knowledge whose type is specified by its unique ID.
+	// Start the study of a skill whose type is specified by its unique ID.
 	// If the conditions are not met, an error is returned.
 	Study(context.Context, *StudyReq) (*None, error)
 	// Start the construction of a building whose type is specified by its unique ID.
