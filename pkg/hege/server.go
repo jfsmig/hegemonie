@@ -9,7 +9,6 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"fmt"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	evtagent "github.com/hegemonie-rpg/engine/pkg/event/agent"
@@ -22,13 +21,11 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/health/grpc_health_v1"
-	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
-	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -36,38 +33,19 @@ import (
 
 type srvCommons struct {
 	pathConfig string
-
-	EndpointService string `yaml:"bind" json:"bind"`
-	EndpointMonitor string `yaml:"monitor" json:"monitor"`
-	ServiceType     string `yaml:"type" json:"type"`
-	PathKey         string `yaml:"key" json:"key"`
-	PathCrt         string `yaml:"cert" json:"cert"`
-
-	MapConfig mapagent.Config `yaml:"map" json:"map"`
-	EvtConfig evtagent.Config `yaml:"evt" json:"evt"`
-	RegConfig regagent.Config `yaml:"reg" json:"reg"`
-
-	apps []utils.RegisterableMonitorable
+	config     utils.MainConfig
+	apps       []utils.RegisterableMonitorable
 }
 
 // appGenerator is implemented by all the "Config" structs in the accepted applications.
 // U know what's the funiest? Those "Config" structs are not even aware of it.
 type appGenerator interface {
-	Application(ctx context.Context) (utils.RegisterableMonitorable, error)
+	Application(ctx context.Context, config utils.MainConfig) (utils.RegisterableMonitorable, error)
 }
-
-const (
-	defaultKeyPath = "/etc/hegemonie/pki/<SRVTYPE>.key"
-	defaultCrtPath = "/etc/hegemonie/pki/<SRVTYPE>.crt"
-)
 
 func servers() *cobra.Command {
 	srv := srvCommons{
-		EndpointService: fmt.Sprintf("0.0.0.0:%v", utils.DefaultPortCommon),
-		EndpointMonitor: fmt.Sprintf("0.0.0.0:%v", utils.DefaultPortMonitoring),
-		ServiceType:     "type-NOT-SET",
-		PathCrt:         defaultCrtPath,
-		PathKey:         defaultKeyPath,
+		config: utils.DefaultConfig(),
 	}
 	cmd := &cobra.Command{
 		Use:              "server",
@@ -77,7 +55,7 @@ func servers() *cobra.Command {
 		TraverseChildren: true,
 	}
 	cmd.PersistentFlags().StringVarP(
-		&srv.pathConfig, "config", "f", "/etc/hegemonie/server.yml",
+		&srv.pathConfig, "config", "f", "/etc/hegemonie/config.yml",
 		"Path to the configuration file")
 	cmd.AddCommand(srv.maps(), srv.events(), srv.regions(), srv.bundle())
 	return cmd
@@ -90,7 +68,9 @@ func (srv *srvCommons) events() *cobra.Command {
 		Example:           "hege server events -f /path/to/config",
 		Args:              cobra.NoArgs,
 		PersistentPreRunE: srv.wrapPreRun("events"),
-		RunE:              func(cmd *cobra.Command, args []string) error { return srv.runServer(srv.EvtConfig) },
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return srv.runServer(&evtagent.AppGenerator{})
+		},
 	}
 }
 
@@ -101,7 +81,9 @@ func (srv *srvCommons) maps() *cobra.Command {
 		Example:           "hege server maps -f /path/to/config",
 		Args:              cobra.NoArgs,
 		PersistentPreRunE: srv.wrapPreRun("maps"),
-		RunE:              func(cmd *cobra.Command, args []string) error { return srv.runServer(srv.MapConfig) },
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return srv.runServer(&mapagent.AppGenerator{})
+		},
 	}
 	return cmd
 }
@@ -113,47 +95,51 @@ func (srv *srvCommons) regions() *cobra.Command {
 		Example:           "hege server regions -f /path/to/config",
 		Args:              cobra.NoArgs,
 		PersistentPreRunE: srv.wrapPreRun("regions"),
-		RunE:              func(cmd *cobra.Command, args []string) error { return srv.runServer(srv.RegConfig) },
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return srv.runServer(&regagent.AppGenerator{})
+		},
 	}
 	return cmd
 }
 
 func (srv *srvCommons) bundle() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:               "all",
+		Use:               "bundle",
+		Aliases:           []string{"all"},
 		Short:             "All services at once",
 		Example:           "hege server all -f /path/to/config",
 		Args:              cobra.NoArgs,
 		PersistentPreRunE: srv.wrapPreRun("all"),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return srv.runServer(srv.RegConfig, srv.EvtConfig, srv.MapConfig)
+			return srv.runServer(
+				&regagent.AppGenerator{},
+				&evtagent.AppGenerator{},
+				&mapagent.AppGenerator{})
 		},
 	}
 	return cmd
 }
 
-func (srv *srvCommons) replaceTag(ps *string) {
-	*ps = strings.Replace(*ps, "<SRVTYPE>", srv.ServiceType, 1)
-}
-
 // ServerTLS automates the creation of a grpc.Server over a TLS connection
 // with the proper interceptors.
 func (srv *srvCommons) serverTLS() (*grpc.Server, error) {
-	if len(srv.PathCrt) <= 0 {
-		return nil, errors.NotValidf("invalid TLS/x509 certificate path [%s]", srv.PathCrt)
+	key := srv.config.Server.PathKey
+	crt := srv.config.Server.PathCrt
+	if len(crt) <= 0 {
+		return nil, errors.NotValidf("invalid TLS/x509 certificate path [%s]", crt)
 	}
-	if len(srv.PathKey) <= 0 {
-		return nil, errors.NotValidf("invalid TLS/x509 key path [%s]", srv.PathKey)
+	if len(key) <= 0 {
+		return nil, errors.NotValidf("invalid TLS/x509 key path [%s]", key)
 	}
 	var certBytes, keyBytes []byte
 	var err error
 
-	utils.Logger.Info().Str("key", srv.PathKey).Str("crt", srv.PathCrt).Msg("TLS config")
+	utils.Logger.Info().Str("key", key).Str("crt", crt).Msg("TLS config")
 
-	if certBytes, err = ioutil.ReadFile(srv.PathCrt); err != nil {
+	if certBytes, err = ioutil.ReadFile(crt); err != nil {
 		return nil, errors.Annotate(err, "certificate file error")
 	}
-	if keyBytes, err = ioutil.ReadFile(srv.PathKey); err != nil {
+	if keyBytes, err = ioutil.ReadFile(key); err != nil {
 		return nil, errors.Annotate(err, "key file error")
 	}
 
@@ -184,15 +170,19 @@ func (srv *srvCommons) runServer(registrators ...appGenerator) error {
 	var prometheusExporter *http.Server
 	var err error
 
+	// Prepare the context for a graceful exit
 	ctx, cancel := context.WithCancel(context.Background())
+	stopChan := make(chan os.Signal, 1)
+	signal.Notify(stopChan, os.Interrupt, syscall.SIGTERM, syscall.SIGINT, syscall.SIGKILL, syscall.SIGABRT)
+	defer signal.Stop(stopChan)
 
+	// Create a GRP server and register the GRPC handlers in the server
 	grpcSrv, err = srv.serverTLS()
 	if err != nil {
 		return errors.Annotate(err, "TLS server error")
 	}
-
 	for _, reg := range registrators {
-		app, err := reg.Application(ctx)
+		app, err := reg.Application(ctx, srv.config)
 		if err != nil {
 			return errors.Annotate(err, "App startup error")
 		}
@@ -201,28 +191,23 @@ func (srv *srvCommons) runServer(registrators ...appGenerator) error {
 			return errors.Annotate(err, "App config error")
 		}
 	}
-
 	grpc_health_v1.RegisterHealthServer(grpcSrv, srv)
 
-	listenerSrv, err = net.Listen("tcp", srv.EndpointService)
+	// Prepare the network endpoints
+	listenerSrv, err = net.Listen("tcp", srv.config.Server.EndpointService)
 	if err != nil {
 		return errors.NewNotValid(err, "listen error")
 	}
-
-	if srv.EndpointMonitor != "" {
-		listenerMon, err = net.Listen("tcp", srv.EndpointMonitor)
+	if srv.config.Server.EndpointMonitor != "" {
+		listenerMon, err = net.Listen("tcp", srv.config.Server.EndpointMonitor)
 		if err != nil {
 			cancel()
 			return errors.NewNotValid(err, "listen error")
 		}
-
 		prometheusExporter = &http.Server{Handler: promhttp.Handler()}
 	}
 
-	stopChan := make(chan os.Signal, 1)
-	signal.Notify(stopChan, os.Interrupt, syscall.SIGTERM, syscall.SIGINT, syscall.SIGKILL, syscall.SIGABRT)
-	defer signal.Stop(stopChan)
-
+	// run the service handlers in side goroutines
 	var barrier sync.WaitGroup
 	runner := func(wg *sync.WaitGroup, tag string, cb func() error) {
 		defer wg.Done()
@@ -242,16 +227,16 @@ func (srv *srvCommons) runServer(registrators ...appGenerator) error {
 		go runner(&barrier, "monitor", func() error { return prometheusExporter.Serve(listenerMon) })
 	}
 
+	// Wait for an exit signal and perform the graceful exit
 	select {
 	case <-stopChan:
 		break
 	case <-ctx.Done():
 		break
 	}
+
 	cancel()
-
 	grpcSrv.GracefulStop()
-
 	if prometheusExporter != nil {
 		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer shutdownCancel()
@@ -266,24 +251,18 @@ func (srv *srvCommons) runServer(registrators ...appGenerator) error {
 
 func (srv *srvCommons) wrapPreRun(srvtype string) func(*cobra.Command, []string) error {
 	return func(*cobra.Command, []string) (err error) {
-		srv.ServiceType = srvtype
-		utils.OverrideLogID("hege," + srv.ServiceType)
+		srv.config.Server.ServiceType = srvtype
+		utils.OverrideLogID("hege," + srvtype)
 		utils.ApplyLogModifiers()
 
-		fin, err := os.Open(srv.pathConfig)
+		err = srv.config.LoadFile(srv.pathConfig, true)
 		if err != nil {
 			return errors.Annotate(err, "configuration path error")
 		}
-		err = yaml.NewDecoder(fin).Decode(srv)
-		if err != nil {
-			return errors.Annotate(err, "invalid configuration")
-		}
-		utils.Logger.Info().RawJSON("srv", utils.JSON2Buf(srv)).Msg("configuration")
+		utils.Logger.Info().Interface("cfg", srv.config).Msg("Loaded")
 
-		utils.OverrideLogID("hege," + srv.ServiceType)
+		utils.OverrideLogID("hege," + srvtype)
 		utils.ApplyLogModifiers()
-		srv.replaceTag(&srv.PathKey)
-		srv.replaceTag(&srv.PathCrt)
 		return nil
 	}
 }

@@ -1,0 +1,58 @@
+---
+
+####
+# Client section
+# Mandatory information to contact all the core services.
+####
+
+client:
+  # Default values used when there is no overloading in each client section
+  default:
+    timeout: 1s
+    key: "@@BASE@@/etc/hegemonie/pki/inner.key"
+    cert: "@@BASE@@/etc/hegemonie/pki/inner.crt"
+
+  # The presence of a proxy overtakes all the specific map / events / regions
+  # settings (that are thus ignored)
+  proxy:
+    addr: 127.0.0.1:6000
+    timeout: 2s
+    # key: "@@BASE@@/etc/hegemonie/pki/outer.key"
+    # cert: "@@BASE@@/etc/hegemonie/pki/outer.crt"
+
+  # Specific configuration to contact the maps service
+  # Currently ignored due to the presence of the :proxy: field.
+  maps:
+    addr: 127.0.0.1:6000
+
+  # Specific configuration to contact the maps service
+  # Currently ignored due to the presence of the :proxy: field.
+  events:
+    addr: 127.0.0.1:6000
+
+  # Specific configuration to contact the regions service
+  # Currently ignored due to the presence of the :proxy: field.
+  regions:
+    addr: 127.0.0.1:6000
+
+  kratos:
+    addr: 127.0.0.1:4455
+
+####
+# Server section
+# Where all the roles locally served are described
+####
+
+server:
+  bind: 127.0.0.1:6000
+  monitor: 127.0.0.1:6001
+  type: all
+  key: "@@BASE@@/etc/hegemonie/pki/inner.key"
+  cert: "@@BASE@@/etc/hegemonie/pki/inner.crt"
+  map:
+    repository: "@@BASE@@/etc/hegemonie/maps"
+  evt:
+    base: "@@BASE@@/var/lib/hegemonie/events"
+  reg:
+    definitions: "@@BASE@@/etc/hegemonie/definitions"
+    live: "@@BASE@@/var/lib/hegemonie/regions"

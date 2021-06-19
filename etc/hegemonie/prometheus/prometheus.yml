@@ -12,18 +12,18 @@ scrape_configs:
   - job_name: reg
     scrape_interval: 1s
     static_configs:
-      - targets: ['hege_regions:6001']
+      - targets: ['@@HOST_HEGE@@:6001']
     tls_config:
       insecure_skip_verify: true
   - job_name: evt
     scrape_interval: 1s
     static_configs:
-      - targets: ['hege_events:6001']
+      - targets: ['@@HOST_HEGE@@:6001']
     tls_config:
       insecure_skip_verify: true
   - job_name: map
     scrape_interval: 1s
     static_configs:
-      - targets: ['hege_maps:6001']
+      - targets: ['@@HOST_HEGE@@:6001']
     tls_config:
       insecure_skip_verify: true

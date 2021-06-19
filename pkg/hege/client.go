@@ -16,37 +16,14 @@ import (
 	"github.com/juju/errors"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/metadata"
-	"gopkg.in/yaml.v3"
 	"os"
 	"strconv"
 	"time"
 )
 
-type endpointConfig struct {
-	Addr    string        `yaml:"addr" json:"addr"`
-	Timeout time.Duration `yaml:"timeout" json:"timeout"`
-}
-
-func (ec *endpointConfig) reset() {
-	ec.Addr = ""
-	ec.Timeout = 0
-}
-
-type clientConfig struct {
-	Proxy   endpointConfig `yaml:"proxy" json:"proxy"`
-	Maps    endpointConfig `yaml:"maps" json:"maps"`
-	Events  endpointConfig `yaml:"events" json:"events"`
-	Regions endpointConfig `yaml:"regions" json:"regions"`
-}
-
-func (cc *clientConfig) reset() {
-	for _, cfg := range []endpointConfig{cc.Proxy, cc.Events, cc.Regions, cc.Maps} {
-		cfg.reset()
-	}
-}
-
 func clients() *cobra.Command {
 	var pathConfig string
+	config := utils.DefaultConfig()
 
 	cmd := &cobra.Command{
 		Use:   "client",
@@ -75,18 +52,19 @@ func clients() *cobra.Command {
 		if err != nil {
 			return errors.Annotate(err, "home directory error")
 		}
-		err = loadDiscovery("/etc/hegemonie/client.yml", false)
+		err = config.LoadFile("/etc/hegemonie/config.yml", false)
 		if err != nil {
 			return errors.Annotate(err, "system configuration")
 		}
-		err = loadDiscovery(home+"/.hegemonie/client.yml", false)
+		err = config.LoadFile(home+"/.hegemonie/config.yml", false)
 		if err != nil {
 			return errors.Annotate(err, "home configuration")
 		}
-		err = loadDiscovery(pathConfig, true)
+		err = config.LoadFile(pathConfig, true)
 		if err != nil {
 			return errors.Annotate(err, "explicit configuration")
 		}
+		utils.Logger.Debug().Interface("cfg", config).Msg("Loaded")
 		return nil
 	}
 	//cmd.PersistentPostRun = func(_ *cobra.Command, _ []string) { cancel() }
@@ -98,47 +76,6 @@ func clients() *cobra.Command {
 		clientTemplates(ctx),
 		clientDefinitions(ctx))
 	return cmd
-}
-
-func loadDiscovery(path string, must bool) error {
-	var config clientConfig
-
-	if path == "" {
-		return nil
-	}
-
-	fin, err := os.Open(path)
-	if err != nil {
-		if must {
-			return errors.Annotate(err, "invalid configuration file")
-		}
-		utils.Logger.Debug().Str("path", path).Msg("Not Found")
-		return nil
-	}
-	decoder := yaml.NewDecoder(fin)
-	if err = decoder.Decode(&config); err != nil {
-		return errors.Annotate(err, "malformed configuration")
-	}
-
-	// Override the configuration if any value is specified
-	if config.Proxy.Addr != "" {
-		utils.DefaultDiscovery = utils.SingleEndpoint(config.Proxy.Addr)
-	} else {
-		sc := utils.NewStaticConfig().(*utils.StaticConfig)
-		if config.Maps.Addr != "" {
-			sc.SetMap(config.Maps.Addr)
-		}
-		if config.Events.Addr != "" {
-			sc.SetEvent(config.Events.Addr)
-		}
-		if config.Regions.Addr != "" {
-			sc.SetRegion(config.Regions.Addr)
-		}
-		utils.DefaultDiscovery = sc
-	}
-
-	utils.Logger.Info().Str("path", path).RawJSON("cfg", utils.JSON2Buf(config)).Msg("Loaded")
-	return nil
 }
 
 func clientMap(ctx context.Context) *cobra.Command {
@@ -671,18 +608,4 @@ func clientTemplates(ctx context.Context) *cobra.Command {
 
 	cmd.AddCommand(list, create, update, del)
 	return cmd
-}
-
-func first(args []string) string {
-	if len(args) <= 0 {
-		return ""
-	}
-	return args[0]
-}
-
-func second(args []string) string {
-	if len(args) <= 1 {
-		return ""
-	}
-	return args[1]
 }

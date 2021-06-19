@@ -1,0 +1,74 @@
+---
+version: "3.3"
+
+services:
+
+# # -------------------------------------------------------------------------- #
+# # ORY KRATOS
+# # User database, self-login infrastructure, 2FA authentication
+# # https://www.ory.sh/kratos/
+# # https://github.com/ory/kratos
+# # -------------------------------------------------------------------------- #
+
+# kratos:
+#   image: oryd/kratos:v0.6.2
+#   ports:
+#     - "4433:4433"
+#     - "4434:4434"
+#   depends_on:
+#     - mailslurper
+#   command: serve -c /etc/kratos/kratos.yml --dev
+#   restart: on-failure
+#   volumes:
+#     -
+#       type: bind
+#       source: ./etc/kratos
+#       target: /etc/kratos
+
+# kratos-selfservice-ui-node:
+#   image: oryd/kratos-selfservice-ui-node:v0.6.2-alpha.1
+#   ports:
+#     - "4455:4455"
+#   environment:
+#     - PORT=4455
+#     - SECURITY_MODE=
+#     - KRATOS_BROWSER_URL=http://127.0.0.1:4433/
+#     - KRATOS_PUBLIC_URL=http://kratos:4433/
+#     - KRATOS_ADMIN_URL=http://kratos:4434/
+#   restart: on-failure
+
+
+# # -------------------------------------------------------------------------- #
+# # ORY mailslurper
+# # Intercept confirmation emails to ease the testing process.
+# # -------------------------------------------------------------------------- #
+
+# mailslurper:
+#   image: oryd/mailslurper:latest-smtps
+#   ports:
+#     - "4436:4436"
+#     - "4437:4437"
+#   restart: on-failure
+
+  # -------------------------------------------------------------------------- #
+  # ORY KETO
+  # User and Policies management, a.k.a. the permission mapping users to
+  # characters
+  # https://www.ory.sh/keto/
+  # https://github.com/ory/keto
+  # -------------------------------------------------------------------------- #
+
+  keto:
+    image: oryd/keto:v0.6.0
+    ports:
+      - "4466:4466"
+      - "4467:4467"
+    volumes:
+      -
+        type: bind
+        source: ./etc/hegemonie
+        target: /etc/hegemonie
+        read_only: true
+    command: -c /etc/hegemonie/keto/keto.yml serve --disable-telemetry --sqa-opt-out
+    restart: on-failure
+

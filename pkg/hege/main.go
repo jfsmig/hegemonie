@@ -27,4 +27,27 @@ func main() {
 	}
 }
 
+func loadDiscovery(config *utils.MainConfig, path string, must bool) error {
+	if err := config.LoadFile(path, must); err != nil {
+		return err
+	}
+
+	utils.Logger.Debug().Str("path", path).RawJSON("cfg", utils.JSON2Buf(config)).Msg("Loaded")
+	return nil
+}
+
 func nonLeaf(_ *cobra.Command, _ []string) error { return errors.New("missing subcommand") }
+
+func first(args []string) string {
+	if len(args) <= 0 {
+		return ""
+	}
+	return args[0]
+}
+
+func second(args []string) string {
+	if len(args) <= 1 {
+		return ""
+	}
+	return args[1]
+}

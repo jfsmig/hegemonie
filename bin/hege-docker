@@ -23,7 +23,6 @@ else
 				;;
       push)
 				docker push "hegemonie-rpg/engine:latest" &
-				docker push "hegemonie-rpg/engine-dependencies:latest" &
 				wait
 				;;
       clean)
@@ -31,29 +30,11 @@ else
 				docker image remove "hegemonie-rpg/engine" &
 				wait
 				;;
-			up)
-				D=$($REPO/bin/hege-sandbox config /)
-				sed "s;@@BASE@@;$D;g" \
-					< "$REPO/docker-compose-base.yml" \
-					> "$D/docker-compose-base.yml"
-				sed "s;@@BASE@@;$D;g" \
-					< "$REPO/etc/prometheus/prometheus.yml" \
-					> "$D/etc/prometheus/prometheus.yml"
-				sed "s;@@BASE@@;$D;g" \
-					< "$REPO/etc/haproxy/haproxy.cfg" \
-					> "$D/etc/haproxy/haproxy.cfg"
-				sed "s;@@BASE@@;$D;g" \
-					< "$REPO/etc/hegemonie/server.yml" \
-					> "$D/etc/hegemonie/server.yml"
-				cd "$D"
-				exec docker-compose -f docker-compose-base.yml up
-				;;
 			*)
 				echo "$0 (build|push|clean|up)"
 				echo "  $0 build   : rebuild the docker images"
 				echo "  $0 push    : push the docker images on te official hub"
 				echo "  $0 clean   : clean the docker images from the local registry"
-				echo "  $0 up      : start the base stack using docker-compose"
 				exit 1
 				;;
   esac

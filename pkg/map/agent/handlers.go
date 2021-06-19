@@ -21,21 +21,19 @@ import (
 	"sync"
 )
 
-// Config gathers the configuration fields required to start a gRPC map API service.
-type Config struct {
-	PathRepository string `yaml:"repository" json:"repository"`
-}
-
 type srvMap struct {
 	proto.UnimplementedMapServer
 
-	config Config
+	config utils.MapServiceConfig
 	maps   mapgraph.SetOfMaps
 	rw     sync.RWMutex
 }
 
+type AppGenerator struct{}
+
 // Application implements the expectations of the application backend
-func (cfg Config) Application(ctx context.Context) (utils.RegisterableMonitorable, error) {
+func (gen *AppGenerator) Application(ctx context.Context, config utils.MainConfig) (utils.RegisterableMonitorable, error) {
+	cfg := config.Server.MapConfig
 	app := &srvMap{config: cfg, maps: make(mapgraph.SetOfMaps, 0)}
 	if err := app.LoadDirectory(cfg.PathRepository); err != nil {
 		return nil, errors.Trace(err)

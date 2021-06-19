@@ -10,15 +10,20 @@ THIS_FILE=$(realpath "${BASH_SOURCE[0]}")
 THIS_DIR=$(dirname "${THIS_FILE}")
 REPO=$(readlink -e "${THIS_DIR}/..")
 
+function error() {
+  echo $@ 1>&2
+  exit 2
+}
+
 function finish() {
 	set +e
-	kill %4 %3 %2 %1
+	kill %2 %1
 	wait
 }
 
 function config() {
-	D=$(mktemp -p '' -d hege-sandbox-XXXXXXXX)
-	cd "$D"
+	D=$(mktemp -p '' -d hege-sandbox-XXXXXXXXXXXX)
+	cd "$REPO"
 
 	if [[ $# -gt 0 ]] ; then
 		BASE="$1"
@@ -26,42 +31,53 @@ function config() {
 		BASE="$D"
 	fi
 
+	cp -rp "$REPO/etc" "$D/etc"
 	mkdir -p \
-		"$D/etc/hegemonie/pki" \
-		"$D/etc/hegemonie/maps" \
 		"$D/var/lib/hegemonie/events" \
-		"$D/var/lib/hegemonie/regions" \
-  	"$D/etc/prometheus" \
-  	"$D/etc/haproxy"
+		"$D/var/lib/hegemonie/regions"
 
 	# Generate a self-signed certificate, one certificate for the (inner) gRPC
 	# services and on certificate for the (outer) gateways
-	"$REPO/bin/hege-pki" ca "$D/etc/hegemonie/pki"
+	./bin/hege-pki ca "$D/etc/hegemonie/pki"
 	for t in inner outer ; do
-		"$REPO/bin/hege-pki" srv "$D/etc/hegemonie/pki" "$t"
+		./bin/hege-pki srv "$D/etc/hegemonie/pki" "$t"
 	done
 
 	# Prepare the configuration for each gRPC service
-	cp -p  "$REPO/etc/hegemonie/client.yml" "$D/etc/hegemonie/"
-	sed "s;@@BASE@@;$BASE;" < "$REPO/etc/hegemonie/server-all-in-one.yml" > "$D/etc/hegemonie/server.yml"
+	sed -i "s;@@BASE@@;$BASE;" $(find "$D/etc" -type f)
 
-	# Generate the sample data:
-	# - sample maps destined to the gRPC maps service
-	# - sample world definitions destined to the gRPC regions service
-	"$REPO/bin/hege-map-transform.sh" "$REPO/docs/maps/" "$D/etc/hegemonie/maps"
-	cp -rp "$REPO/docs/definitions/hegeIV" "$D/etc/hegemonie/definitions"
+	# Generate sample maps destined to the gRPC maps service
+	./bin/hege-map-transform.sh ./docs/maps/ "$D/etc/hegemonie/maps"
 
-	# Generate a sample configuration for the Proxy
-	sed "s;@@BASE@@;$BASE;" < "$REPO/etc/haproxy/haproxy-all-in-one.cfg" > "$D/etc/haproxy/haproxy.cfg"
+	# Generate sample world definitions destined to the gRPC regions service
+	cp -rp ./docs/definitions/hegeIV "$D/etc/hegemonie/definitions"
 
-	cat >>$D/enable <<EOF
-alias hc='hege client -f $D/etc/hegemonie/client.yml'
+	cat >>"$D/enable" <<EOF
+alias hc='hege client -f $D/etc/hegemonie/config.yml'
 EOF
 
 	echo "$D"
 }
 
 function run() {
+	if [[ $# -lt 1 ]] ; then error "Missing a configuration path" ; fi
+	if [[ -z "$1" ]] ; then error "Invalid configuration path" ; fi
+	D=$1
+	if ! [[ -d "$D" ]] ; then error "The configuration path is not a directory" ; fi
+	cd "$D"
+
+	trap finish SIGTERM SIGINT EXIT
+
+	# Start a single all-in-oone service
+	hege server -f "$D/etc/hegemonie/config.yml" all &
+
+	# A quick check to see if all the services answer
+	hege client -f "$D/etc/hegemonie/config.yml" maps list
+
+	wait
+}
+
+function run_with_docker() {
 	[[ $# -ge 1 ]]
 	[[ -n "$1" ]]
 	D=$1
@@ -70,37 +86,42 @@ function run() {
 
 	trap finish SIGTERM SIGINT EXIT
 
-	# Start a single all-in-oone service 
-	hege server -f "$D/etc/hegemonie/server.yml" all &
+	docker-compose \
+	  -f etc/docker/docker-compose-base.yml \
+	  -f etc/docker/docker-compose-aaa.yml \
+	  -f etc/docker/docker-compose-o11n.yml \
+	  up &
 
 	# A quick check to see if all the services answer
-	hege client -f "$D/etc/hegemonie/client.yml" maps list
-
-	# Now start the proxy 
-	haproxy -- "$D/etc/haproxy/haproxy.cfg" &
+	hege client -f "$D/etc/hegemonie/config.yml" maps list
 
 	wait
 }
 
 function usage() {
 	set +x
+	F=$(basename $0)
+	W=$(echo $F | tr [:graph:] ' ')
 	echo "Usage: $0 [config|run|help]"
-	echo "  $0 help                : display this help section"
-	echo "  $0 config              : generate a sandbox config. and dump its path on stdout"
-	echo "  $0 run PATH_TO_SANDBOX : run a sandbox env. configured in the given directory"
-	echo "  $0                     : shortcut to generate a config and run it"
-	echo "                           (a.k.a \"$0 run \$($0 config)\")"
+	echo "  $F help                   : display this help section"
+	echo "  $F config                 : generate a sandbox config. and dump its path on stdout"
+	echo "  $F run PATH_TO_SANDBOX    : run a sandbox env. configured in the given directory"
+	echo "  $F docker PATH_TO_SANDBOX : run a sandbox env. with docker-compose"
+	echo "  $F                        : shortcut to generate a config and run it"
+	echo "  $W                          (a.k.a \"$F run \$($F config)\")"
 	set -x
 }
 
 if [[ $# -eq 0 ]] ; then
-	exec $0 run $($0 config)
+  cfg=$($0 config)
+	exec $0 run "$cfg"
 else
 	action=$1 ; shift
 	case "$action" in
 		help) usage ; exit 0 ;;
 		config) config $@ ;;
 		run) run $@ ;;
+		docker) run_with_docker $@ ;;
 	esac
 fi
 

@@ -17,21 +17,20 @@ import (
 	"math"
 )
 
-// Config gathers the configuration fields required to start a gRPC Event API service.
-type Config struct {
-	PathBase string `yaml:"base" json:"base"`
-}
-
 type eventService struct {
 	proto.UnimplementedConsumerServer
 	proto.UnimplementedProducerServer
 
-	cfg     Config
+	cfg     utils.EventServiceConfig
 	backend *back.Backend
 }
 
+type AppGenerator struct{}
+
 // Application implements the expectations of the application backend
-func (cfg Config) Application(_ context.Context) (utils.RegisterableMonitorable, error) {
+func (gen *AppGenerator) Application(ctx context.Context, config utils.MainConfig) (utils.RegisterableMonitorable, error) {
+	cfg := config.Server.EvtConfig
+
 	if cfg.PathBase == "" {
 		return nil, errors.New("missing path to the event data directory")
 	}

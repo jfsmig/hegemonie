@@ -1,0 +1,71 @@
+---
+version: v0.6.0-alpha.3
+
+namespaces: file://@@BASE@@/etc/hegemonie/keto/namespaces
+
+dsn: memory
+
+serve:
+  write:
+    host: 0.0.0.0
+    cors:
+      allowed_origins:
+        - https://hegemonie.be
+        - https://*.hegemonie.be
+      allowed_methods:
+        - GET
+      allowed_headers:
+        - ''
+      exposed_headers:
+        - ''
+      allow_credentials: false
+      max_age: -100000000
+      debug: true
+      enabled: false
+    tls:
+      cert:
+        path: @@BASE@@/etc/hegemonie/pki/inner.crt
+      key:
+        path: @@BASE@@/etc/hegemonie/pki/inner.key
+    port: 4467
+
+  read:
+    host: 0.0.0.0
+    cors:
+      allowed_origins:
+        - https://hegemonie.be
+        - https://*.hegemonie.be
+      allowed_methods:
+        - GET
+      allowed_headers:
+        - ''
+      exposed_headers:
+        - ''
+      allow_credentials: false
+      max_age: -100000000
+      debug: true
+      enabled: false
+    tls:
+      cert:
+        path: @@BASE@@/etc/hegemonie/pki/inner.crt
+      key:
+        path: @@BASE@@/etc/hegemonie/pki/inner.pem
+    port: 4466
+
+profiling: ""
+log:
+  format: text
+  leak_sensitive_values: true
+  level: debug
+
+tracing:
+  service_name: ORY Hydra
+  providers:
+    jaeger:
+      propagation: jaeger
+      sampling:
+        type: const
+        value: 1
+        server_url: http://@@HOST_JAEGER_COLLECTOR@@:5778/sampling
+      local_agent_address: @@HOST_JAEGER_AGENT@@:6831
+  provider: jaeger

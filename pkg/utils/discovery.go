@@ -37,15 +37,7 @@ type StatelessDiscovery interface {
 // DefaultDiscovery is the default implementation of a discovery.
 // Valued by default to the discovery of test services, all located on
 // localhost and serving default ports.
-var DefaultDiscovery = TestEnv()
-
-type singleHost struct {
-	hostname string
-}
-
-type singleEndpoint struct {
-	endpoint string
-}
+var DefaultDiscovery = NewStaticConfig()
 
 // StaticConfig is a StatelessDiscovery implementation with a different
 // endpoint for each kind of service, configured once in the application.
@@ -57,61 +49,17 @@ type StaticConfig struct {
 	events  string
 }
 
-// TestEnv forwards to SingleHost on localhost
-func TestEnv() StatelessDiscovery { return SingleEndpoint("localhost:6000") }
-
-// SingleHost creates a singleHost implementation.
-// singleHost is the simplest implementation of a StatelessDiscovery ever.
-// It locates all the services on a given host at their default port value.
-func SingleHost(h string) StatelessDiscovery { return &singleHost{h} }
-
-// SingleEndpoint creates a singleEndpoint implementation.
-// singleHost is the proxyed implementation of a StatelessDiscovery.
-// It locates all the services on a given host, all with the same port.
-func SingleEndpoint(e string) StatelessDiscovery { return &singleEndpoint{e} }
-
-func (d *singleHost) makeEndpoint(p uint) (string, error) {
-	return fmt.Sprintf("%s:%d", d.hostname, p), nil
-}
-
-// Kratos ... see StatelessDiscovery.Kratos
-func (d *singleHost) Kratos() (string, error) { return d.makeEndpoint(DefaultPortKratos) }
-
-// Keto ... see StatelessDiscovery.Keto
-func (d *singleHost) Keto() (string, error) { return d.makeEndpoint(DefaultPortKeto) }
-
-// Map ... see StatelessDiscovery.Map
-func (d *singleHost) Map() (string, error) { return d.makeEndpoint(DefaultPortMap) }
-
-// Region ... see StatelessDiscovery.Region
-func (d *singleHost) Region() (string, error) { return d.makeEndpoint(DefaultPortRegion) }
-
-// Event ... see StatelessDiscovery.Event
-func (d *singleHost) Event() (string, error) { return d.makeEndpoint(DefaultPortEvent) }
-
-// Kratos ... see StatelessDiscovery.Kratos
-func (d *singleEndpoint) Kratos() (string, error) { return d.endpoint, nil }
-
-// Keto ... see StatelessDiscovery.Keto
-func (d *singleEndpoint) Keto() (string, error) { return d.endpoint, nil }
-
-// Map ... see StatelessDiscovery.Map
-func (d *singleEndpoint) Map() (string, error) { return d.endpoint, nil }
-
-// Region ... see StatelessDiscovery.Region
-func (d *singleEndpoint) Region() (string, error) { return d.endpoint, nil }
-
-// Event ... see StatelessDiscovery.Event
-func (d *singleEndpoint) Event() (string, error) { return d.endpoint, nil }
+func f1(p int) string { return fmt.Sprintf("127.0.0.1:%v", p) }
 
 // NewStaticConfig instantiates a StaticConfig with the default endpoint value
 // for each service type.
 func NewStaticConfig() StatelessDiscovery {
-	f1 := func(s string, _ error) string { return s }
 	return &StaticConfig{
-		maps:    f1(DefaultDiscovery.Map()),
-		events:  f1(DefaultDiscovery.Event()),
-		regions: f1(DefaultDiscovery.Region()),
+		maps:    f1(DefaultPortCommon),
+		events:  f1(DefaultPortCommon),
+		regions: f1(DefaultPortCommon),
+		keto:    f1(DefaultPortKeto),
+		kratos:  f1(DefaultPortKratos),
 	}
 }
 

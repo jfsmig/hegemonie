@@ -19,21 +19,19 @@ import (
 	"strconv"
 )
 
-// Config gathers the configuration fields required to start a gRPC region API service.
-type Config struct {
-	PathDefs string `yaml:"definitions" json:"definitions"`
-	PathLive string `yaml:"live" json:"live"`
-}
-
 type regionBackend struct {
-	cfg Config
+	cfg utils.RegionServiceConfig
 	w   *region.World
 }
 
 var none = &proto.None{}
 
+type AppGenerator struct{}
+
 // Application implements the expectations of the application backend
-func (cfg Config) Application(ctx context.Context) (utils.RegisterableMonitorable, error) {
+func (gen *AppGenerator) Application(ctx context.Context, config utils.MainConfig) (utils.RegisterableMonitorable, error) {
+	cfg := config.Server.RegConfig
+
 	w, err := region.NewWorld()
 	if err != nil {
 		return nil, errors.Annotate(err, "")
